@@ -138,8 +138,10 @@ function calculate3D() {
     const totalTime = hours + (minutes / 60);
     const cost = ((filamentPrice / 1000) * grams + (consumption / 1000) * totalTime * kwhPrice + (machinePrice / lifespan) * totalTime + extra) * (1 + fail / 100);
     const sale = cost * mult;
-    document.getElementById('c3d-res-cost').innerText = cost.toFixed(2);
-    document.getElementById('c3d-res-price').innerText = sale.toFixed(2);
+    const resCostEl = document.getElementById('c3d-res-cost');
+    const resPriceEl = document.getElementById('c3d-res-price');
+    if (resCostEl) resCostEl.innerText = cost.toFixed(2);
+    if (resPriceEl) resPriceEl.innerText = sale.toFixed(2);
     update3DChart(grams, totalTime, mult, filamentPrice, consumption, kwhPrice, machinePrice, lifespan, extra, fail);
 }
 function update3DChart(baseGrams, baseHours, mult, filP, cons, kwhP, mP, life, extra, fail) {
@@ -155,7 +157,9 @@ function update3DChart(baseGrams, baseHours, mult, filP, cons, kwhP, mP, life, e
 }
 
 function calculateDTF() {
-    const pedido = parseInt(document.getElementById('cdtf-order').value) || 0;
+    const orderInput = document.getElementById('cdtf-order');
+    if (!orderInput) return;
+    const pedido = parseInt(orderInput.value) || 0;
     const stock = parseInt(document.getElementById('cdtf-stock').value) || 0;
     const pPack5 = parseFloat(document.getElementById('cdtf-pack5').value) || 0;
     const pSingle = parseFloat(document.getElementById('cdtf-single').value) || 0;
@@ -177,7 +181,7 @@ function calculateDTF() {
 function renderModule(id) {
     if (id === 'winInventory') { renderInventory(); renderMovements(); }
     if (id === 'winPurchases') renderPurchases();
-    if (id === 'winExpenses') renderExpenses();
+    if (id === 'winExpenses') { populateExpenseMonthSelector(); renderExpenses(); }
     if (id === 'winSuppliers') renderSuppliers();
     if (id === 'winInvoices') renderInvoices();
     if (id === 'winWarehouse') renderWarehouse();
@@ -186,6 +190,11 @@ function renderModule(id) {
 function renderInventory() {
     const body = document.getElementById('inventoryBody'); if (!body) return;
     body.innerHTML = state.inventory.map((item, idx) => `<tr><td>${item.name}</td><td>${item.stock}</td><td>$${item.avgCost.toFixed(2)}</td><td>$${(item.stock * item.avgCost).toFixed(2)}</td><td><button onclick="deleteInventory(${idx})">Eliminar</button></td></tr>`).join('');
+}
+function deleteInventory(idx) {
+    state.inventory.splice(idx, 1);
+    saveState();
+    renderInventory();
 }
 function renderMovements() {
     const body = document.getElementById('movementsBody'); if (!body) return;
@@ -215,25 +224,61 @@ function renderPurchases() {
     body.innerHTML = state.purchases.map(p => `<tr><td>${new Date(p.date).toLocaleDateString()}</td><td>${p.supplier}</td><td>${p.product}</td><td>${p.qty}</td><td>$${p.total.toFixed(2)}</td></tr>`).join('');
 }
 
+function populateExpenseMonthSelector() {
+    const sel = document.getElementById('e-filter-month-selector');
+    if (!sel) return;
+    sel.innerHTML = '';
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const opt = document.createElement('option');
+        const monthName = d.toLocaleString('es-ES', { month: 'long' }).toUpperCase();
+        opt.value = d.toISOString().slice(0, 7);
+        opt.innerText = `${monthName} DE ${d.getFullYear()}`;
+        sel.appendChild(opt);
+    }
+}
+function filterExpenses() {
+    renderExpenses();
+}
 function registerExpense() {
-    const concept = document.getElementById('e-concept').value; const amount = parseFloat(document.getElementById('e-amount').value);
+    const dateInput = document.getElementById('e-date').value;
     const cat = document.getElementById('e-cat').value;
-    state.expenses.push({ id: Date.now().toString().slice(-6), date: new Date().toISOString(), concept, amount, cat, user: state.currentUser });
-    saveState(); renderExpenses();
+    const concept = document.getElementById('e-concept').value;
+    const amount = parseFloat(document.getElementById('e-amount').value) || 0;
+    const notes = document.getElementById('e-notes').value;
+    state.expenses.push({ id: Date.now().toString().slice(-6), date: dateInput || new Date().toISOString().slice(0, 10), cat, concept, amount, notes, user: state.currentUser });
+    saveState(); renderExpenses(); alert('Gasto registrado con éxito');
 }
 function renderExpenses() {
-    const body = document.getElementById('expensesBody'); if (!body) return;
-    body.innerHTML = state.expenses.map(e => `<tr><td>${e.id}</td><td>${new Date(e.date).toLocaleDateString()}</td><td>${e.concept}</td><td>$${e.amount}</td><td>${e.cat}</td></tr>`).join('');
+    const container = document.getElementById('expensesTableContainer'); if (!container) return;
+    const filter = document.getElementById('e-filter-month-selector').value;
+    const filtered = state.expenses.filter(e => e.date.startsWith(filter));
+    if (filtered.length === 0) container.innerHTML = '<p class="no-expenses">Sin gastos este mes.</p>';
+    else container.innerHTML = `<table><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>${filtered.map(e => `<tr><td>${new Date(e.date).toLocaleDateString()}</td><td>${e.cat}</td><td>${e.concept}</td><td>$${e.amount.toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
+}
+function exportExpensesToExcel() {
+    const filter = document.getElementById('e-filter-month-selector').value;
+    const filtered = state.expenses.filter(e => e.date.startsWith(filter));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filtered), "Gastos");
+    XLSX.writeFile(wb, `Gastos_${filter}.xlsx`);
 }
 
 function addToInvoice(type) {
-    const item = type === '3D' ? { desc: 'Impresión 3D', price: parseFloat(document.getElementById('c3d-res-price').innerText) } : { desc: state.lastDTF.desc, price: state.lastDTF.sale };
-    state.currentOrder.push(item); renderCurrentOrder();
+    const priceEl = document.getElementById('c3d-res-price');
+    const price = type === '3D' ? (priceEl ? parseFloat(priceEl.innerText) : 0) : state.lastDTF.sale;
+    const desc = type === '3D' ? 'Impresión 3D' : state.lastDTF.desc;
+    state.currentOrder.push({ desc, price }); renderCurrentOrder();
 }
 function renderCurrentOrder() {
     const list = document.getElementById('currentOrderItems'); if (!list) return;
     list.innerHTML = state.currentOrder.map((item, idx) => `<li>${item.desc} - $${item.price.toFixed(2)} <button onclick="removeFromOrder(${idx})">x</button></li>`).join('');
     document.getElementById('currentOrderTotal').innerText = state.currentOrder.reduce((sum, i) => sum + i.price, 0).toFixed(2);
+}
+function removeFromOrder(idx) {
+    state.currentOrder.splice(idx, 1);
+    renderCurrentOrder();
 }
 function finalizeInvoice() {
     if (state.currentOrder.length === 0) return;
@@ -243,6 +288,10 @@ function finalizeInvoice() {
 function renderInvoices() {
     const body = document.getElementById('invoicesBody'); if (!body) return;
     body.innerHTML = state.invoices.map(inv => `<tr><td>${inv.id}</td><td>${new Date(inv.date).toLocaleDateString()}</td><td>${inv.items.length} items</td><td>$${inv.total.toFixed(2)}</td><td><button onclick="viewInvoice('${inv.id}')">Ver</button></td></tr>`).join('');
+}
+function viewInvoice(id) {
+    const inv = state.invoices.find(i => i.id === id);
+    if (inv) alert(`Factura ${inv.id}\nFecha: ${new Date(inv.date).toLocaleDateString()}\nTotal: $${inv.total.toFixed(2)}\nItems:\n${inv.items.map(i => `- ${i.desc}: $${i.price.toFixed(2)}`).join('\n')}`);
 }
 function searchInvoice(val) {
     document.querySelectorAll('#invoicesTable tbody tr').forEach(r => r.style.display = r.cells[0].innerText.includes(val) ? '' : 'none');
@@ -271,14 +320,12 @@ function exportToExcel() {
     const end = document.getElementById('export-end').value;
     const wb = XLSX.utils.book_new();
     const filterByDate = (arr) => arr.filter(i => { if (!start || !end) return true; return i.date >= start && i.date <= end; });
-
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.inventory), "Inventario");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterByDate(state.purchases)), "Compras");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterByDate(state.expenses)), "Gastos");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterByDate(state.invoices)), "Facturas");
     XLSX.writeFile(wb, `Reporte_Pacioli.xlsx`);
 }
-
 function filterTable(tableId, val) {
     document.querySelectorAll(`#${tableId} tbody tr`).forEach(r => {
         let match = false; Array.from(r.cells).forEach(c => { if(c.innerText.toLowerCase().includes(val.toLowerCase())) match = true; });

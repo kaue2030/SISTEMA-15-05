@@ -74,6 +74,97 @@ body, html {
 }
 .win-content { flex: 1; overflow: auto; padding: 15px; }
 
+/* Dark Theme for Expenses */
+.window[id="winExpenses"] {
+    background: #121212;
+    color: #e0e0e0;
+    border-color: #333;
+}
+
+.window[id="winExpenses"] .win-content {
+    background: #1a1a1a;
+}
+
+.expenses-dark-content {
+    padding: 10px;
+}
+
+.expense-header-red {
+    color: #e74c3c;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+.expense-grid-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.exp-input-group input, .exp-input-group select {
+    width: 100%;
+    background: #222;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.full-width {
+    grid-column: 1 / span 1;
+}
+
+.btn-register-red {
+    grid-column: 2 / span 1;
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.expense-footer-tools {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #333;
+    padding-top: 15px;
+}
+
+.expense-footer-tools select {
+    background: #111;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 10px;
+    width: 80%;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.btn-excel-dark {
+    background: #442a2a;
+    color: #ff6b6b;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.expenses-table-view {
+    margin-top: 20px;
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+}
+
 /* Modules styling */
 h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
 .field { margin-bottom: 10px; }

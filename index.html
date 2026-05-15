@@ -165,23 +165,45 @@
         </div>
 
         <!-- Expenses Template -->
-        <div id="tpl-winExpenses" title="Gastos">
-            <div class="expenses-content">
-                <form id="expenseForm">
-                    <div class="field"><label>Concepto:</label><input type="text" id="e-concept"></div>
-                    <div class="field"><label>Monto:</label><input type="number" id="e-amount"></div>
-                    <div class="field"><label>Categoría:</label>
-                        <select id="e-cat"><option>Servicios</option><option>Alquiler</option><option>Marketing</option><option>Otros</option></select>
+        <div id="tpl-winExpenses" title="Gastos operativos">
+            <div class="expenses-dark-content">
+                <div class="expense-header-red">+ NUEVO GASTO</div>
+                <form id="expenseForm" class="expense-grid-form">
+                    <div class="exp-input-group">
+                        <input type="date" id="e-date">
                     </div>
-                    <button type="button" onclick="registerExpense()">Registrar Gasto</button>
+                    <div class="exp-input-group">
+                        <select id="e-cat">
+                            <option>Alquiler</option>
+                            <option>Servicios</option>
+                            <option>Marketing</option>
+                            <option>Sueldos</option>
+                            <option>Otros</option>
+                        </select>
+                    </div>
+                    <div class="exp-input-group">
+                        <input type="text" id="e-concept" placeholder="Descripción">
+                    </div>
+                    <div class="exp-input-group">
+                        <input type="number" id="e-amount" placeholder="Monto">
+                    </div>
+                    <div class="exp-input-group full-width">
+                        <input type="text" id="e-notes" placeholder="Notas">
+                    </div>
+                    <button type="button" class="btn-register-red" onclick="registerExpense()">+ REGISTRAR</button>
                 </form>
-                <div class="toolbar">
-                    <input type="month" id="e-filter-month" onchange="filterExpenses()">
+
+                <div class="expense-footer-tools">
+                    <select id="e-filter-month-selector" onchange="filterExpenses()">
+                        <!-- Dynamic options -->
+                    </select>
+                    <button class="btn-excel-dark" onclick="exportExpensesToExcel()">📥 EXCEL</button>
                 </div>
-                <table id="expensesTable">
-                    <thead><tr><th>ID</th><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Cat</th></tr></thead>
-                    <tbody id="expensesBody"></tbody>
-                </table>
+
+                <div id="expensesTableContainer" class="expenses-table-view">
+                    <!-- Dynamic expense list -->
+                    <p class="no-expenses">Sin gastos este mes.</p>
+                </div>
             </div>
         </div>
 
