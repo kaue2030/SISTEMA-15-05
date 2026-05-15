@@ -355,10 +355,122 @@
         <!-- Add missing placeholders for other windows to avoid errors -->
         <div id="tpl-winSuppliers"><h2 class="page-header">Proveedores</h2><div id="supplierList"></div><button class="btn btn-primary" onclick="showSupplierForm()">Nuevo</button></div>
         <div id="tpl-winPayments"><h2 class="page-header">Formas de Pago</h2><div style="display:flex; gap:10px;"><input type="text" id="pay-name" class="form-control"><button class="btn btn-primary" onclick="addPaymentMethod()">Agregar</button></div><ul id="paymentMethodsList" class="list-group" style="margin-top:15px;"></ul></div>
-        <div id="tpl-winPurchases"><h2 class="page-header">Facturas de Compra</h2><div class="well"><div class="row"><div class="col-md-3"><input type="date" id="p-date" class="form-control"></div><div class="col-md-3"><input type="text" id="p-supplier" class="form-control" placeholder="Prov"></div><div class="col-md-3"><select id="p-link-inventory" class="form-control"></select></div><div class="col-md-3"><input type="number" id="p-qty" class="form-control" placeholder="Cant"></div><div class="col-md-3" style="margin-top:10px;"><input type="number" id="p-unit" class="form-control" placeholder="Unit"></div><div class="col-md-6" style="margin-top:10px;"><input type="text" id="p-desc" class="form-control" placeholder="Desc"></div><div class="col-md-3" style="margin-top:10px;"><button class="btn btn-primary btn-block" onclick="registerPurchase()">Registrar</button></div></div></div><div id="purchasesTableContainer"></div></div>
+        <div id="tpl-winPurchases">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="btn-group" style="margin-bottom: 15px;">
+                        <button class="btn btn-sm btn-success" onclick="toggleNewPurchase()"><i class="fa fa-plus"></i> Nueva Compra</button>
+                    </div>
+
+                    <div id="new-purchase-pane" class="panel panel-info hidden">
+                        <div class="panel-heading">Registrar Factura de Compra</div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Fecha</label>
+                                        <input type="date" id="p-date" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Proveedor</label>
+                                        <input type="text" id="p-supplier" class="form-control" placeholder="Nombre Proveedor">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Vincular a Stock</label>
+                                        <select id="p-link-inventory" class="form-control"></select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Cantidad</label>
+                                        <input type="number" id="p-qty" class="form-control" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Costo Unitario</label>
+                                        <input type="number" id="p-unit" class="form-control" placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="form-group">
+                                        <label>Descripción / Observaciones</label>
+                                        <input type="text" id="p-desc" class="form-control" placeholder="Ej: Factura A-0001...">
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="registerPurchase()">Registrar Compra</button>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs" style="margin-bottom: 15px;">
+                        <li class="active"><a href="#" onclick="renderPurchases('all')">Todas</a></li>
+                        <li><a href="#" onclick="renderPurchases('pending')">Pendientes</a></li>
+                    </ul>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Proveedor</th>
+                                    <th>Observaciones</th>
+                                    <th class="text-right">Total</th>
+                                    <th class="text-right">Fecha</th>
+                                    <th class="text-right">Vencimiento</th>
+                                    <th class="text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchasesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="tpl-winExpenses"><h2 class="page-header">Gastos</h2><div class="well"><div class="row"><div class="col-md-3"><input type="date" id="e-date" class="form-control"></div><div class="col-md-3"><select id="e-cat" class="form-control"><option>Alquiler</option><option>Sueldos</option></select></div><div class="col-md-3"><input type="text" id="e-concept" class="form-control" placeholder="Conc"></div><div class="col-md-3"><input type="number" id="e-amount" class="form-control" placeholder="$$"></div><div class="col-md-12" style="margin-top:10px;"><button class="btn btn-primary btn-block" onclick="registerExpense()">Guardar</button></div></div></div><div id="expensesTableContainer"></div></div>
         <div id="tpl-winWarehouse"><h2 class="page-header">Almacén 3D</h2><div id="warehouseList"></div><button class="btn btn-primary" onclick="showWarehouseForm()">Añadir Link</button></div>
 
+    </div>
+
+    <!-- Invoice Details Modal -->
+    <div class="modal fade" id="modal_invoice_details" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="m-inv-title">Factura</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <p><strong>Fecha:</strong> <span id="m-inv-date"></span></p>
+                            <p><strong>Vencimiento:</strong> <span id="m-inv-due"></span></p>
+                        </div>
+                        <div class="col-xs-6 text-right">
+                            <p><strong>Cliente:</strong> <br><span id="m-inv-cust"></span></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <table class="table table-condensed">
+                        <thead><tr><th>Descripción</th><th class="text-right">Monto</th></tr></thead>
+                        <tbody id="m-inv-items"></tbody>
+                    </table>
+                    <div class="well well-sm text-right">
+                        <h3 style="margin:0">Total: $<span id="m-inv-total"></span></h3>
+                    </div>
+                    <p id="m-inv-obs" class="text-muted small"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

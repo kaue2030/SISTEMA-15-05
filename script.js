@@ -285,7 +285,7 @@ function renderInvoices(filter = 'all') {
             <td class="text-right">${new Date(inv.date).toLocaleDateString()}</td>
             <td class="text-right">${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
             <td class="text-right">
-                <button class="btn btn-xs btn-default" onclick="alert('Ver detalles de ${inv.id}')">VER</button>
+                <button class="btn btn-xs btn-default" onclick="viewInvoice('${inv.id}')">VER</button>
                 ${inv.status === 'Pending' ? `<button class="btn btn-xs btn-success" onclick="updateInvoiceStatus('${inv.id}', 'Paid')">PAGAR</button>` : ''}
             </td>
         </tr>`;
@@ -310,6 +310,51 @@ function checkInvoiceGaps() {
     alert(gaps.length ? "Faltan: " + gaps.join(", ") : "No hay huecos.");
 }
 window.checkInvoiceGaps = checkInvoiceGaps;
+
+function viewInvoice(id) {
+    const inv = state.invoices.find(i => i.id === id);
+    if (!inv) return;
+    const cust = state.customers.find(c => c.cid === inv.customerId) || { name: 'Consumidor Final', cid: '---' };
+
+    document.getElementById('m-inv-title').innerText = `Detalle de Factura ${inv.id}`;
+    document.getElementById('m-inv-date').innerText = new Date(inv.date).toLocaleString();
+    document.getElementById('m-inv-due').innerText = inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : 'N/A';
+    document.getElementById('m-inv-cust').innerHTML = `${cust.name}<br><small>${cust.cid}</small>`;
+    document.getElementById('m-inv-total').innerText = inv.total.toFixed(2);
+    document.getElementById('m-inv-obs').innerText = inv.obs || '';
+
+    document.getElementById('m-inv-items').innerHTML = inv.items.map(item => `
+        <tr>
+            <td>${item.desc}</td>
+            <td class="text-right">$${item.price.toFixed(2)}</td>
+        </tr>
+    `).join('');
+
+    $('#modal_invoice_details').modal('show');
+}
+window.viewInvoice = viewInvoice;
+
+function viewPurchase(id) {
+    const p = state.purchases.find(i => i.id === id);
+    if (!p) return;
+
+    document.getElementById('m-inv-title').innerText = `Detalle de Compra ${p.id}`;
+    document.getElementById('m-inv-date').innerText = new Date(p.date).toLocaleDateString();
+    document.getElementById('m-inv-due').innerText = 'N/A';
+    document.getElementById('m-inv-cust').innerHTML = `Proveedor: ${p.supplier}`;
+    document.getElementById('m-inv-total').innerText = p.total.toFixed(2);
+    document.getElementById('m-inv-obs').innerText = p.desc || '';
+
+    document.getElementById('m-inv-items').innerHTML = `
+        <tr>
+            <td>${p.product || 'Insumo/Gasto'} (x${p.qty || 1})</td>
+            <td class="text-right">$${p.total.toFixed(2)}</td>
+        </tr>
+    `;
+
+    $('#modal_invoice_details').modal('show');
+}
+window.viewPurchase = viewPurchase;
 
 function addCustomer() {
     const win = document.getElementById('main-content');
@@ -360,6 +405,9 @@ function saveTechParam() { alert("Parámetros guardados en el perfil de material
 window.saveTechParam = saveTechParam;
 
 // Purchase/Expense stubs (minimal for the clone)
+function toggleNewPurchase() { document.getElementById('new-purchase-pane').classList.toggle('hidden'); populatePurchaseProductSelector(); }
+window.toggleNewPurchase = toggleNewPurchase;
+
 function registerPurchase() {
     const win = document.getElementById('main-content');
     const dateInput = win.querySelector('#p-date').value;
@@ -370,9 +418,12 @@ function registerPurchase() {
     const unit = parseFloat(win.querySelector('#p-unit').value) || 0;
     const total = qty * unit;
 
+    if (!supplier || isNaN(total)) { alert("Completa los datos"); return; }
+
     const purchase = {
+        id: 'PUR-' + Date.now().toString().slice(-4),
         date: dateInput || new Date().toISOString().slice(0, 10),
-        supplier, desc, product: linkedProduct, qty, unit, total, user: state.currentUser
+        supplier, desc, product: linkedProduct, qty, unit, total, user: state.currentUser, status: 'Paid'
     };
 
     state.purchases.push(purchase);
@@ -384,16 +435,31 @@ function registerPurchase() {
             item.avgCost = (oldVal + total) / item.stock;
         }
     }
-    saveState(); renderPurchases(); alert('Compra registrada');
+    saveState();
+    document.getElementById('new-purchase-pane').classList.add('hidden');
+    renderPurchases();
 }
 window.registerPurchase = registerPurchase;
 
-function renderPurchases() {
+function renderPurchases(filter = 'all') {
     const win = document.getElementById('main-content');
-    const container = win.querySelector('#purchasesTableContainer');
-    if (!container) return;
-    container.innerHTML = `<table class="table"><thead><tr><th>Fecha</th><th>Prov</th><th>Prod</th><th>Total</th></tr></thead><tbody>${state.purchases.map(p => `<tr><td>${p.date}</td><td>${p.supplier}</td><td>${p.product || p.desc}</td><td>$${p.total.toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
+    const body = win.querySelector('#purchasesBody'); if (!body) return;
+    populatePurchaseProductSelector();
+
+    let list = state.purchases;
+    body.innerHTML = list.slice().reverse().map(p => `
+        <tr class="success">
+            <td><i class="fa fa-check"></i></td>
+            <td>${p.supplier}</td>
+            <td><small>${p.desc || '-'}</small></td>
+            <td class="text-right">$${p.total.toFixed(2)}</td>
+            <td class="text-right">${new Date(p.date).toLocaleDateString()}</td>
+            <td class="text-right">-</td>
+            <td class="text-right"><button class="btn btn-xs btn-default" onclick="viewPurchase('${p.id}')">VER</button></td>
+        </tr>
+    `).join('');
 }
+window.renderPurchases = renderPurchases;
 
 function populatePurchaseProductSelector() {
     const win = document.getElementById('main-content');
