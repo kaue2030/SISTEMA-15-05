@@ -1,161 +1,74 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap');
-
-:root {
-    --bg-main: #ffffff;
-    --bg-secondary: #f9fafb;
-    --border-color: #e5e7eb;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --accent: #000000;
-    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    --window-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+/* Resetting floating window styles for the Yeti clone */
+body.yeti-clone {
+    background-color: #ffffff;
+    font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #222222;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    overflow: hidden;
-    height: 100vh;
+#pacioli-nav {
+    border-bottom: 3px solid #008cba;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Login Screen */
-.login-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: var(--bg-main); z-index: 2000;
-    display: flex; align-items: center; justify-content: center;
+.page-header {
+    margin-top: 20px;
+    border-bottom: 2px solid #eeeeee;
+    padding-bottom: 10px;
 }
-.login-box {
-    width: 350px; padding: 40px; text-align: center;
-}
-.login-box h1 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 2rem; }
-.login-box input {
-    width: 100%; padding: 12px; margin-bottom: 1rem;
-    border: 1px solid var(--border-color); border-radius: 6px;
-    font-size: 0.9rem; outline: none;
-}
-.login-box button {
-    width: 100%; padding: 12px; background: var(--accent); color: white;
-    border: none; border-radius: 6px; cursor: pointer; font-weight: 500;
-}
-
-/* Sidebar */
-.sidebar {
-    position: fixed; top: 0; left: 0; width: 64px; height: 100%;
-    background: var(--bg-main); border-right: 1px solid var(--border-color);
-    display: flex; flex-direction: column; align-items: center; padding-top: 20px;
-    z-index: 1000;
-}
-.sidebar-logo { margin-bottom: 40px; font-size: 1.5rem; }
-.sidebar-item {
-    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-    margin-bottom: 20px; color: var(--text-secondary); cursor: pointer;
-    border-radius: 8px; transition: all 0.2s;
-}
-.sidebar-item:hover { background: var(--bg-secondary); color: var(--accent); }
-
-/* Main Desktop Area */
-.desktop {
-    margin-left: 64px; height: 100%; position: relative;
-    padding: 40px; display: flex; flex-direction: column;
-}
-
-.header-greeting {
-    font-family: 'Playfair Display', serif; font-size: 2.5rem; margin-bottom: 8px;
-}
-.header-sub { color: var(--text-secondary); margin-bottom: 40px; }
-
-/* Windows & Cards */
-.window {
-    position: absolute; background: white; border-radius: 12px;
-    box-shadow: var(--window-shadow); border: 1px solid var(--border-color);
-    min-width: 320px; overflow: hidden; display: flex; flex-direction: column;
-}
-.win-header {
-    padding: 12px 16px; border-bottom: 1px solid var(--border-color);
-    display: flex; justify-content: space-between; align-items: center;
-    cursor: move; background: #fff;
-}
-.win-header span { font-weight: 600; font-size: 0.9rem; }
-.win-controls button {
-    background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);
-}
-
-.win-content { padding: 20px; overflow-y: auto; flex-grow: 1; }
-.manual-content section { margin-bottom: 24px; }
-.manual-content h3 { font-size: 1.1rem; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; }
-.manual-content p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
-.manual-content ul { padding-left: 20px; font-size: 0.9rem; color: var(--text-secondary); }
-.manual-content li { margin-bottom: 4px; }
-
-/* Dash Grid (for dashboard items) */
-.dash-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px; pointer-events: none; /* Layout only */
-}
-.dash-card {
-    background: white; border-radius: 12px; padding: 20px;
-    box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
-    pointer-events: auto;
-}
-.card-title { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-.card-value { font-size: 1.8rem; font-weight: 500; margin-bottom: 4px; }
-.card-footer { font-size: 0.75rem; color: var(--text-secondary); margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px; }
-
-/* Taskbar (Bottom Actions) */
-.action-bar {
-    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
-    background: white; border: 1px solid var(--border-color);
-    padding: 6px; border-radius: 12px; display: flex; gap: 4px;
-    box-shadow: var(--window-shadow); z-index: 1000;
-}
-.action-btn {
-    padding: 8px 16px; border: none; background: none; border-radius: 8px;
-    font-size: 0.85rem; font-weight: 500; cursor: pointer;
-    display: flex; align-items: center; gap: 8px; transition: 0.2s;
-}
-.action-btn:hover { background: var(--bg-secondary); }
-
-/* Bottom Command Bar */
-.command-bar {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-    width: 600px; background: #f3f4f6; border-radius: 12px;
-    padding: 12px 20px; display: flex; align-items: center; gap: 12px;
-}
-.command-bar input {
-    background: none; border: none; width: 100%; outline: none;
-    font-size: 0.95rem; color: var(--text-primary);
-}
-
-/* Forms & Inputs inside modules */
-.field { margin-bottom: 16px; }
-.field label { display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; }
-.field input, .field select {
-    width: 100%; padding: 10px; border: 1px solid var(--border-color);
-    border-radius: 8px; outline: none; font-size: 0.9rem;
-}
-.btn-action {
-    background: var(--accent); color: white; border: none; padding: 12px 20px;
-    border-radius: 8px; cursor: pointer; width: 100%; font-weight: 500;
-    margin-top: 10px;
-}
-
-/* Tables */
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th { text-align: left; font-size: 0.75rem; color: var(--text-secondary); padding: 12px; border-bottom: 1px solid var(--border-color); }
-td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
-
-.status-paid { background: #ecfdf5 !important; }
-.status-pending { background: #fffbeb !important; }
-.status-canceled { background: #fef2f2 !important; color: #991b1b !important; text-decoration: line-through; }
-.status-canceled a, .status-canceled button { text-decoration: none; display: inline-block; }
-
-.tab-btn {
-    padding: 8px 16px; border: none; background: none; cursor: pointer;
-    font-size: 0.85rem; color: var(--text-secondary); border-bottom: 2px solid transparent;
-}
-.tab-btn.active { color: var(--text-primary); border-bottom-color: var(--text-primary); font-weight: 600; }
 
 .hidden { display: none !important; }
+
+/* Dashboard refinements */
+.panel { border-radius: 0; box-shadow: none; }
+.panel-primary > .panel-heading { background-color: #008cba; }
+
+/* Table styling to match FS */
+.table > tbody > tr > td {
+    vertical-align: middle;
+    padding: 12px 8px;
+}
+
+.status-paid { background-color: #dff0d8 !important; }
+.status-pending { background-color: #fcf8e3 !important; }
+.status-canceled { background-color: #f2dede !important; color: #a94442; text-decoration: line-through; }
+
+/* New Invoice Pane */
+#new-invoice-pane {
+    margin-top: 10px;
+    border-left: 5px solid #008cba;
+}
+
+/* Forms */
+.form-control {
+    border-radius: 0;
+    box-shadow: none;
+    border: 1px solid #cccccc;
+}
+.btn {
+    border-radius: 2px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+/* Jumbotron (Result area) */
+.jumbotron {
+    background: #f5f5f5;
+    border: 1px solid #e3e3e3;
+    border-radius: 4px;
+}
+
+/* Chart containers */
+canvas {
+    width: 100% !important;
+}
+
+/* Page content animation */
+#main-content {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
