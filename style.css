@@ -1,263 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap');
+
 :root {
-    --bg: #e2e2e2;
-    --taskbar: #333;
-    --win-bg: #fff;
-    --primary: #2980b9;
-    --accent: #27ae60;
-    --error: #e74c3c;
+    --bg-main: #ffffff;
+    --bg-secondary: #f9fafb;
+    --border-color: #e5e7eb;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --accent: #000000;
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --window-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-body, html {
-    margin: 0; padding: 0;
-    height: 100%; overflow: hidden;
-    font-family: 'Segoe UI', sans-serif;
-    background: #008080; /* Win95 vibe */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
 }
 
-/* Login */
+/* Login Screen */
 .login-overlay {
-    position: fixed; top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.8); z-index: 10000;
-    display: flex; justify-content: center; align-items: center;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg-main); z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
 }
 .login-box {
-    background: var(--win-bg); padding: 30px; border-radius: 8px;
-    width: 300px; text-align: center;
+    width: 350px; padding: 40px; text-align: center;
 }
-.login-box input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
-.login-box button { width: 100%; padding: 10px; background: var(--primary); color: #fff; border:none; cursor: pointer; }
-.error { color: var(--error); font-size: 0.8rem; }
-.hidden { display: none !important; }
+.login-box h1 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 2rem; }
+.login-box input {
+    width: 100%; padding: 12px; margin-bottom: 1rem;
+    border: 1px solid var(--border-color); border-radius: 6px;
+    font-size: 0.9rem; outline: none;
+}
+.login-box button {
+    width: 100%; padding: 12px; background: var(--accent); color: white;
+    border: none; border-radius: 6px; cursor: pointer; font-weight: 500;
+}
 
-/* Desktop */
-.desktop { height: 100%; position: relative; }
-.taskbar {
-    position: absolute; bottom: 0; left: 0; width: 100%;
-    height: 40px; background: var(--taskbar); color: #fff;
-    display: flex; align-items: center; padding: 0 10px;
-    box-sizing: border-box; z-index: 5000;
+/* Sidebar */
+.sidebar {
+    position: fixed; top: 0; left: 0; width: 64px; height: 100%;
+    background: var(--bg-main); border-right: 1px solid var(--border-color);
+    display: flex; flex-direction: column; align-items: center; padding-top: 20px;
+    z-index: 1000;
 }
-.start-btn { padding: 5px 15px; background: #555; cursor: pointer; margin-right: 20px; }
-.task-items button {
-    background: #444; border: 1px solid #666; color: #fff;
-    padding: 5px 10px; margin-right: 5px; cursor: pointer;
+.sidebar-logo { margin-bottom: 40px; font-size: 1.5rem; }
+.sidebar-item {
+    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px; color: var(--text-secondary); cursor: pointer;
+    border-radius: 8px; transition: all 0.2s;
 }
-.user-info { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.sidebar-item:hover { background: var(--bg-secondary); color: var(--accent); }
 
-/* Start Menu */
-.start-menu {
-    position: absolute; bottom: 45px; left: 5px;
-    background: #c0c0c0; border: 2px solid #fff;
-    border-right-color: #000; border-bottom-color: #000;
-    width: 200px; padding: 5px; z-index: 6000;
+/* Main Desktop Area */
+.desktop {
+    margin-left: 64px; height: 100%; position: relative;
+    padding: 40px; display: flex; flex-direction: column;
 }
-.start-menu button {
-    width: 100%; text-align: left; background: none; border: none;
-    padding: 10px; cursor: pointer; display: block;
-}
-.start-menu button:hover { background: #000080; color: white; }
-.start-menu hr { border: 1px inset #fff; }
 
-/* Window Manager */
+.header-greeting {
+    font-family: 'Playfair Display', serif; font-size: 2.5rem; margin-bottom: 8px;
+}
+.header-sub { color: var(--text-secondary); margin-bottom: 40px; }
+
+/* Windows & Cards */
 .window {
-    position: absolute; min-width: 300px; min-height: 200px;
-    background: var(--win-bg); border: 2px solid #333;
-    box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
-    display: flex; flex-direction: column;
+    position: absolute; background: white; border-radius: 12px;
+    box-shadow: var(--window-shadow); border: 1px solid var(--border-color);
+    min-width: 320px; overflow: hidden; display: flex; flex-direction: column;
 }
 .win-header {
-    background: #2c3e50; color: #fff; padding: 5px 10px;
-    cursor: move; display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-bottom: 1px solid var(--border-color);
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: move; background: #fff;
 }
+.win-header span { font-weight: 600; font-size: 0.9rem; }
 .win-controls button {
-    background: #e74c3c; color: white; border: none; padding: 2px 8px; cursor: pointer;
-}
-.win-content { flex: 1; overflow: auto; padding: 15px; }
-
-/* Dark Theme for Expenses */
-.window[id="winExpenses"] {
-    background: #121212;
-    color: #e0e0e0;
-    border-color: #333;
+    background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);
 }
 
-.window[id="winExpenses"] .win-content {
-    background: #1a1a1a;
+.win-content { padding: 20px; overflow-y: auto; flex-grow: 1; }
+
+/* Dash Grid (for dashboard items) */
+.dash-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px; pointer-events: none; /* Layout only */
+}
+.dash-card {
+    background: white; border-radius: 12px; padding: 20px;
+    box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+    pointer-events: auto;
+}
+.card-title { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card-value { font-size: 1.8rem; font-weight: 500; margin-bottom: 4px; }
+.card-footer { font-size: 0.75rem; color: var(--text-secondary); margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px; }
+
+/* Taskbar (Bottom Actions) */
+.action-bar {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: white; border: 1px solid var(--border-color);
+    padding: 6px; border-radius: 12px; display: flex; gap: 4px;
+    box-shadow: var(--window-shadow); z-index: 1000;
+}
+.action-btn {
+    padding: 8px 16px; border: none; background: none; border-radius: 8px;
+    font-size: 0.85rem; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; transition: 0.2s;
+}
+.action-btn:hover { background: var(--bg-secondary); }
+
+/* Bottom Command Bar */
+.command-bar {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    width: 600px; background: #f3f4f6; border-radius: 12px;
+    padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+.command-bar input {
+    background: none; border: none; width: 100%; outline: none;
+    font-size: 0.95rem; color: var(--text-primary);
 }
 
-.expenses-dark-content {
-    padding: 10px;
+/* Forms & Inputs inside modules */
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; }
+.field input, .field select {
+    width: 100%; padding: 10px; border: 1px solid var(--border-color);
+    border-radius: 8px; outline: none; font-size: 0.9rem;
 }
-
-.expense-header-red {
-    color: #e74c3c;
-    font-size: 0.8rem;
-    font-weight: bold;
-    margin-bottom: 15px;
-    letter-spacing: 1px;
-}
-
-.expense-grid-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
-
-.exp-input-group input, .exp-input-group select {
-    width: 100%;
-    background: #222;
-    border: 1px solid #333;
-    color: #fff;
-    padding: 10px;
-    border-radius: 4px;
-}
-
-.full-width {
-    grid-column: 1 / span 1;
-}
-
-.btn-register-red {
-    grid-column: 2 / span 1;
-    background: #ff4d4d;
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    text-transform: uppercase;
-}
-
-.expense-footer-tools {
-    margin-top: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #333;
-    padding-top: 15px;
-}
-
-.expense-footer-tools select {
-    background: #111;
-    color: #fff;
-    border: 1px solid #333;
-    padding: 10px;
-    width: 80%;
-    border-radius: 4px;
-    text-transform: uppercase;
-}
-
-.btn-excel-dark {
-    background: #442a2a;
-    color: #ff6b6b;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.expenses-table-view {
-    margin-top: 20px;
-    text-align: center;
-    color: #666;
-    font-size: 0.9rem;
-}
-
-/* Dark Theme for Purchases */
-.window[id="winPurchases"] {
-    background: #121212;
-    color: #e0e0e0;
-    border-color: #333;
-}
-
-.window[id="winPurchases"] .win-content {
-    background: #1a1a1a;
-}
-
-.purchases-dark-content {
-    padding: 10px;
-}
-
-.purchase-header-red {
-    color: #e74c3c;
-    font-size: 0.8rem;
-    font-weight: bold;
-    margin-bottom: 15px;
-    letter-spacing: 1px;
-}
-
-.purchase-grid-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
-
-.pur-input-group input, .pur-input-group select {
-    width: 100%;
-    background: #222;
-    border: 1px solid #333;
-    color: #fff;
-    padding: 10px;
-    border-radius: 4px;
-}
-
-.pur-hint {
-    color: #666;
-    font-size: 0.75rem;
+.btn-action {
+    background: var(--accent); color: white; border: none; padding: 12px 20px;
+    border-radius: 8px; cursor: pointer; width: 100%; font-weight: 500;
     margin-top: 10px;
-    font-style: italic;
 }
 
-.purchase-footer-tools {
-    margin-top: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #333;
-    padding-top: 15px;
-}
-
-.purchase-footer-tools select {
-    background: #111;
-    color: #fff;
-    border: 1px solid #333;
-    padding: 10px;
-    width: 80%;
-    border-radius: 4px;
-    text-transform: uppercase;
-}
-
-.purchases-table-view {
-    margin-top: 20px;
-    text-align: center;
-    color: #666;
-    font-size: 0.9rem;
-}
-
-.purchases-table-view table {
-    color: #ccc;
-}
-
-/* Modules styling */
-h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-.field { margin-bottom: 10px; }
-.field label { display: block; font-size: 0.9rem; font-weight: bold; }
-.field input, .field select { width: 100%; padding: 5px; box-sizing: border-box; }
-.btn-action { background: var(--accent); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; }
-
+/* Tables */
 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-th { background: #f2f2f2; }
+th { text-align: left; font-size: 0.75rem; color: var(--text-secondary); padding: 12px; border-bottom: 1px solid var(--border-color); }
+td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
 
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
-.card { border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #f9f9f9; }
-
-.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.dtf-results { background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap; font-size: 0.85rem; }
-
-.toolbar { margin-bottom: 15px; display: flex; gap: 10px; }
-.toolbar input { padding: 5px; }
-
-.active-invoice { border: 2px dashed var(--primary); padding: 10px; margin-bottom: 20px; background: #ebf5fb; }
+.hidden { display: none !important; }
