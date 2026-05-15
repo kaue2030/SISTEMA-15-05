@@ -9,6 +9,8 @@ let state = {
     warehouse3d: [],
     invoices: [],
     currentOrder: [],
+    techLogs: [],
+    techParams: [],
     windows: {}
 };
 
@@ -31,13 +33,13 @@ function saveState() {
 }
 
 // --- AUTHENTICATION ---
-const USERS = { 'KAUE': 'kaue123', 'PEDRO': 'pedro123' };
+const USERS = { 'KAUE': 'kaue123', 'PEDRO': 'pedro123', 'TECNICO': 'tech123' };
 
 function setupAuth() {
     document.getElementById('btnLogin').onclick = () => {
         const user = document.getElementById('username').value.toUpperCase();
         const pass = document.getElementById('password').value;
-        if (USERS[user] && (pass === 'kaue123' || pass === 'pedro123' || pass === '1234')) login(user);
+        if (USERS[user] && (pass === USERS[user] || pass === '1234')) login(user);
         else document.getElementById('loginError').classList.remove('hidden');
     };
     const btnLogout = document.getElementById('btnLogoutSidebar');
@@ -56,23 +58,38 @@ function login(user) {
     document.getElementById('currentUser').innerText = user;
     saveState();
     restoreWindows();
-    initDashCharts();
+    refreshDashboard();
 }
 
-function initDashCharts() {
+let dashChart = null;
+function refreshDashboard() {
+    const revEl = document.getElementById('dash-weekly-rev');
+    const now = new Date();
+    const currentMonth = now.toISOString().slice(0, 7);
+    const monthInvoices = state.invoices.filter(inv => inv.date.startsWith(currentMonth));
+    const totalMonth = monthInvoices.reduce((s, i) => s + i.total, 0);
+    if (revEl) revEl.innerText = totalMonth.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
     const ctx = document.getElementById('dash-profit-mini-chart');
     if (!ctx) return;
-    new Chart(ctx, {
+    const last6 = state.invoices.slice(-6);
+    const labels = last6.map((_, i) => i + 1);
+    const data = last6.map(i => i.total);
+
+    if (dashChart) dashChart.destroy();
+    dashChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
+            labels: labels.length ? labels : ['0'],
             datasets: [{
-                data: [12000, 19000, 15000, 17000, 22000, 15200],
+                data: data.length ? data : [0],
                 backgroundColor: '#111827',
                 borderRadius: 4
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: { x: { display: false }, y: { display: false } }
         }
@@ -241,6 +258,7 @@ function renderModule(id) {
     if (id === 'winSuppliers') renderSuppliers();
     if (id === 'winInvoices') renderInvoices();
     if (id === 'winWarehouse') renderWarehouse();
+    if (id === 'winTech') renderTech();
 }
 
 function renderInventory() {
@@ -259,7 +277,7 @@ function renderMovements() {
     const win = document.getElementById('winInventory');
     if (!win) return;
     const body = win.querySelector('#movementsBody'); if (!body) return;
-    body.innerHTML = state.movements.map(m => `<tr><td>${new Date(m.date).toLocaleDateString()}</td><td>${m.name}</td><td>${m.qty}</td><td>${m.reason}</td><td>${m.user}</td></tr>`).join('');
+    body.innerHTML = state.movements.slice().reverse().map(m => `<tr><td>${new Date(m.date).toLocaleDateString()}</td><td>${m.name}</td><td>${m.qty}</td><td>${m.user}</td></tr>`).join('');
 }
 function adjustStock() {
     const win = document.getElementById('winInventory');
@@ -388,13 +406,13 @@ function removeFromOrder(idx) { state.currentOrder.splice(idx, 1); renderCurrent
 function finalizeInvoice() {
     if (state.currentOrder.length === 0) return;
     state.invoices.push({ id: 'INV-' + Math.floor(Math.random()*10000), date: new Date().toISOString(), items: [...state.currentOrder], total: state.currentOrder.reduce((sum, i) => sum + i.price, 0), user: state.currentUser });
-    state.currentOrder = []; saveState(); renderInvoices(); renderCurrentOrder();
+    state.currentOrder = []; saveState(); renderInvoices(); renderCurrentOrder(); refreshDashboard();
 }
 function renderInvoices() {
     const win = document.getElementById('winInvoices');
     if (!win) return;
     const body = win.querySelector('#invoicesBody'); if (!body) return;
-    body.innerHTML = state.invoices.map(inv => `<tr><td>${inv.id}</td><td>${new Date(inv.date).toLocaleDateString()}</td><td>${inv.items.length} items</td><td>$${inv.total.toFixed(2)}</td><td><button onclick="viewInvoice('${inv.id}')">Ver</button></td></tr>`).join('');
+    body.innerHTML = state.invoices.map(inv => `<tr><td>${inv.id}</td><td>${inv.user || '---'}</td><td>$${inv.total.toFixed(2)}</td><td><button onclick="viewInvoice('${inv.id}')">Ver</button></td></tr>`).join('');
 }
 function viewInvoice(id) {
     const inv = state.invoices.find(i => i.id === id);
@@ -434,6 +452,28 @@ function exportToExcel() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterByDate(state.invoices)), "Facturas");
     XLSX.writeFile(wb, `Reporte_Pacioli.xlsx`);
 }
+function registerTechLog() {
+    const win = document.getElementById('winTech');
+    const machine = win.querySelector('#tech-machine').value;
+    const log = win.querySelector('#tech-log').value;
+    if (!machine || !log) return;
+    state.techLogs.push({ date: new Date().toISOString(), user: state.currentUser, msg: `[${machine}] ${log}` });
+    saveState(); renderTech();
+}
+function saveTechParam() {
+    const win = document.getElementById('winTech');
+    const mat = win.querySelector('#tech-mat').value;
+    const tn = win.querySelector('#tech-temp-n').value;
+    const tb = win.querySelector('#tech-temp-b').value;
+    state.techParams.push({ mat, tn, tb });
+    saveState(); alert('Parámetros guardados');
+}
+function renderTech() {
+    const win = document.getElementById('winTech'); if (!win) return;
+    const body = win.querySelector('#techBody');
+    body.innerHTML = state.techLogs.slice().reverse().map(l => `<tr><td>${new Date(l.date).toLocaleDateString()}</td><td>${l.user}</td><td>${l.msg}</td></tr>`).join('');
+}
+
 function filterTable(tableId, val) {
     document.querySelectorAll(`#${tableId} tbody tr`).forEach(r => {
         let match = false; Array.from(r.cells).forEach(c => { if(c.innerText.toLowerCase().includes(val.toLowerCase())) match = true; });

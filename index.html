@@ -27,6 +27,7 @@
         <div class="sidebar-item" title="Inventario" onclick="openWindow('winInventory')">📦</div>
         <div class="sidebar-item" title="Facturas" onclick="openWindow('winInvoices')">📄</div>
         <div class="sidebar-item" title="Gastos" onclick="openWindow('winExpenses')">💸</div>
+        <div class="sidebar-item" title="Técnico" onclick="openWindow('winTech')">🛠</div>
         <div class="sidebar-item" title="Manual" onclick="openWindow('winManual')">📖</div>
         <div style="flex-grow: 1;"></div>
         <div class="sidebar-item" title="Cerrar Sesión" id="btnLogoutSidebar">⏻</div>
@@ -42,14 +43,14 @@
         <div class="dash-grid">
             <div class="dash-card">
                 <div class="card-title"><span>📅</span> Resumen Semanal</div>
-                <div class="card-value">$4,200</div>
-                <p style="font-size: 0.85rem;">Ingresos proyectados para esta semana.</p>
+                        <div class="card-value">$<span id="dash-weekly-rev">0.00</span></div>
+                        <p style="font-size: 0.85rem;">Ingresos reales acumulados este mes.</p>
                 <div class="card-footer" onclick="openWindow('winInvoices')">Ver detalle breakdown</div>
             </div>
             <div class="dash-card">
-                <div class="card-title"><span>📈</span> Análisis de Ganancia</div>
+                <div class="card-title"><span>📈</span> Historial de Ventas</div>
                 <canvas id="dash-profit-mini-chart" style="max-height: 80px;"></canvas>
-                <div class="card-footer">Tu ganancia promedio: $15,200</div>
+                <div class="card-footer">Últimas 6 facturas generadas.</div>
             </div>
             <div class="dash-card">
                 <div class="card-title"><span>⛽</span> Cash Runway</div>
@@ -69,6 +70,7 @@
             <button class="action-btn" onclick="openWindow('winPurchases')">🛒 Compras</button>
             <button class="action-btn" onclick="openWindow('winExpenses')">💸 Gastos</button>
             <button class="action-btn" onclick="openWindow('winInvoices')">📝 Facturar</button>
+            <button class="action-btn" onclick="openWindow('winTech')">🛠 Técnico</button>
         </div>
 
         <!-- Command Bar -->
@@ -83,13 +85,42 @@
     <div id="templates" style="display:none">
         <div id="tpl-winManual" title="Manual de Usuario">
             <div class="manual-content">
-                <h2>Guía de Uso del Sistema</h2>
-                <h3>1. Calculadora 3D</h3>
-                <p>Calcula el costo real de una impresión considerando material, energía y desgaste de máquina.</p>
-                <h3>2. Calculadora DTF</h3>
-                <p>Optimiza la compra de remeras comparando packs vs unidades sueltas.</p>
-                <h3>3. Inventario y Compras</h3>
-                <p>Usa Costo Promedio Ponderado para mantener tus márgenes actualizados.</p>
+                <h2>📖 Manual de Usuario - Pacioli ERP</h2>
+
+                <section>
+                    <h3>1. Calculadora 3D 📊</h3>
+                    <p>Calcula el <strong>Costo Total de Producción</strong>. Cada campo influye así:</p>
+                    <ul>
+                        <li><strong>Consumo (W):</strong> Potencia real de la impresora. Afecta el costo eléctrico.</li>
+                        <li><strong>Precio Máquina:</strong> Costo inicial. Se usa para calcular la amortización (desgaste).</li>
+                        <li><strong>Vida Útil (h):</strong> Horas totales que estimas que durará la máquina antes de requerir reinversión.</li>
+                        <li><strong>Falla (%):</strong> Factor de seguridad para cubrir piezas fallidas.</li>
+                    </ul>
+                    <p><em>Ejemplo:</em> 100g de filamento ($3.5/g) + 5h luz ($15/h) + 5h desgaste ($5.5/h) = ~$450 costo. Multiplicador x2.5 = $1125 venta.</p>
+                </section>
+
+                <section>
+                    <h3>2. Calculadora DTF 👕</h3>
+                    <p>Estrategia de compra optimizada:</p>
+                    <ul>
+                        <li>Compara si conviene comprar <strong>Packs de 5</strong> (más barato por unidad) o <strong>Remeras Sueltas</strong> para completar el pedido.</li>
+                        <li>El sistema elige automáticamente la opción más barata (Menor Costo).</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>3. Inventario (CPP) 📦</h3>
+                    <p>Usamos <strong>Costo Promedio Ponderado</strong>. Si tienes 10 remeras a $1000 y compras 10 a $1500, tu nuevo costo de inventario será $1250 por unidad.</p>
+                </section>
+
+                <section>
+                    <h3>4. Perfil Técnico 🛠</h3>
+                    <p>Diseñado para el seguimiento de la maquinaria:</p>
+                    <ul>
+                        <li>Registra fallas de nivelación, atascos o cambios de boquilla.</li>
+                        <li>Guarda perfiles de temperatura para cada material para que todo el equipo sepa qué parámetros usar.</li>
+                    </ul>
+                </section>
             </div>
         </div>
 
@@ -112,26 +143,38 @@
                         <div class="field"><label>Mult:</label><input type="number" id="c3d-mult" value="2.5" step="0.1"></div>
                     </div>
                 </div>
-                <div class="calc-results" style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-top: 10px;">
-                    <p style="font-size: 0.8rem; color: #6b7280;">Costo Produc: <span id="c3d-res-cost" style="color: #111827; font-weight: 600;">0</span></p>
-                    <p style="font-size: 1.2rem; font-weight: 600;">Venta: <span id="c3d-res-price">0</span></p>
-                    <button class="btn-action" onclick="addToInvoice('3D')">Agregar a Factura</button>
+                <div class="calc-results" style="background: #111827; color: white; padding: 20px; border-radius: 12px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 4px;">Costo de Producción</p>
+                        <p style="font-size: 1.1rem; font-weight: 600;">$<span id="c3d-res-cost">0</span></p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 4px;">Precio Sugerido</p>
+                        <p style="font-size: 1.5rem; font-weight: 700; color: #10b981;">$<span id="c3d-res-price">0</span></p>
+                    </div>
                 </div>
+                <button class="btn-action" style="width: 100%; margin-top: 10px;" onclick="addToInvoice('3D')">✚ Agregar a Factura de Venta</button>
                 <canvas id="c3d-chart" style="max-height: 120px; margin-top: 15px;"></canvas>
             </div>
         </div>
 
-        <div id="tpl-winDTF" title="Calculadora DTF">
+        <div id="tpl-winDTF" title="Calculadora DTF (Optimización)">
             <div class="calc-dtf-content">
-                <div class="field"><label>Pedido:</label><input type="number" id="cdtf-order" value="13"></div>
-                <div class="field"><label>Stock:</label><input type="number" id="cdtf-stock" value="2"></div>
-                <div class="field"><label>Pack 5 ($):</label><input type="number" id="cdtf-pack5" value="17.75"></div>
-                <div class="field"><label>Suelta ($):</label><input type="number" id="cdtf-single" value="4.5"></div>
-                <div class="field"><label>DTF ($):</label><input type="number" id="cdtf-dtfPrice" value="10"></div>
-                <div class="field"><label>Dibujos/DTF:</label><input type="number" id="cdtf-drawPerDtf" value="3"></div>
-                <div class="field"><label>Venta Unit ($):</label><input type="number" id="cdtf-sellPrice" value="10"></div>
-                <div id="cdtf-results" style="background: #f3f4f6; padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 0.85rem; white-space: pre-wrap;"></div>
-                <button class="btn-action" onclick="addToInvoice('DTF')">Agregar a Factura</button>
+                <div class="calc-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <div class="field"><label>Pedido:</label><input type="number" id="cdtf-order" value="13"></div>
+                        <div class="field"><label>Stock:</label><input type="number" id="cdtf-stock" value="2"></div>
+                        <div class="field"><label>Venta Unit:</label><input type="number" id="cdtf-sellPrice" value="10"></div>
+                    </div>
+                    <div>
+                        <div class="field"><label>Pack 5 ($):</label><input type="number" id="cdtf-pack5" value="17.75"></div>
+                        <div class="field"><label>Suelta ($):</label><input type="number" id="cdtf-single" value="4.5"></div>
+                        <div class="field"><label>DTF ($):</label><input type="number" id="cdtf-dtfPrice" value="10"></div>
+                    </div>
+                </div>
+                <div class="field"><label>Dibujos por DTF:</label><input type="number" id="cdtf-drawPerDtf" value="3"></div>
+                <div id="cdtf-results" style="background: #f3f4f6; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 0.9rem; line-height: 1.6; border-left: 4px solid #111827;"></div>
+                <button class="btn-action" style="width: 100%" onclick="addToInvoice('DTF')">✚ Agregar a Factura</button>
             </div>
         </div>
 
@@ -157,7 +200,7 @@
                 <div style="margin-top: 20px;">
                     <h4>Movimientos</h4>
                     <table id="movementsTable">
-                        <thead><tr><th>Fecha</th><th>Prod</th><th>Cant</th><th>Motivo</th></tr></thead>
+                        <thead><tr><th>Fecha</th><th>Prod</th><th>Cant</th><th>Usuario</th></tr></thead>
                         <tbody id="movementsBody"></tbody>
                     </table>
                 </div>
@@ -194,6 +237,33 @@
             </div>
         </div>
 
+        <div id="tpl-winTech" title="Área Técnica">
+            <div class="tech-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h4>Mantenimiento & Errores</h4>
+                        <div class="field"><label>Máquina:</label><input type="text" id="tech-machine" placeholder="Ender 3 V, etc."></div>
+                        <div class="field"><label>Falla / Acción:</label><textarea id="tech-log" style="width: 100%; border-radius: 8px; border: 1px solid #e5e7eb; padding: 10px;"></textarea></div>
+                        <button class="btn-action" onclick="registerTechLog()">Registrar Evento</button>
+                    </div>
+                    <div>
+                        <h4>Parámetros Sugeridos</h4>
+                        <div class="field"><label>Material:</label><input type="text" id="tech-mat" placeholder="PLA, PETG..."></div>
+                        <div class="field"><label>Temp Nozzle:</label><input type="number" id="tech-temp-n"></div>
+                        <div class="field"><label>Temp Bed:</label><input type="number" id="tech-temp-b"></div>
+                        <button class="btn-action" onclick="saveTechParam()">Guardar Perfil</button>
+                    </div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <h4>Historial Técnico</h4>
+                    <table id="techTable">
+                        <thead><tr><th>Fecha</th><th>Usuario</th><th>Evento/Acción</th></tr></thead>
+                        <tbody id="techBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div id="tpl-winInvoices" title="Facturación">
             <div class="invoices-content">
                 <div style="background: #fdf2f2; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
@@ -203,7 +273,7 @@
                     <button class="btn-action" onclick="finalizeInvoice()">Emitir Factura</button>
                 </div>
                 <table id="invoicesTable">
-                    <thead><tr><th>ID</th><th>Total</th><th>Acciones</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Usuario</th><th>Total</th><th>Acciones</th></tr></thead>
                     <tbody id="invoicesBody"></tbody>
                 </table>
             </div>

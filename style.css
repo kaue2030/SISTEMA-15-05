@@ -84,6 +84,11 @@ body {
 }
 
 .win-content { padding: 20px; overflow-y: auto; flex-grow: 1; }
+.manual-content section { margin-bottom: 24px; }
+.manual-content h3 { font-size: 1.1rem; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; }
+.manual-content p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
+.manual-content ul { padding-left: 20px; font-size: 0.9rem; color: var(--text-secondary); }
+.manual-content li { margin-bottom: 4px; }
 
 /* Dash Grid (for dashboard items) */
 .dash-grid {
