@@ -9,7 +9,10 @@ let state = {
     customers: [],
     currentOrder: [],
     techLogs: [],
-    savedCalculations: []
+    savedCalculations: [],
+    suppliers: [],
+    returns: [],
+    materialFailures: []
 };
 
 // Initialize
@@ -59,7 +62,7 @@ function login(user) {
     document.getElementById('floating-saved').classList.remove('hidden');
     document.getElementById('currentUserNav').innerText = user;
     saveState();
-    showPage('winInvoices');
+    showPage('winDashboard');
 }
 
 // --- NAVIGATION ---
@@ -89,9 +92,11 @@ function setupGlobalEvents() {
 }
 
 function renderModule(id) {
+    if (id === 'winDashboard') renderDashboard();
     if (id === 'winInventory') renderInventory();
     if (id === 'winPurchases') renderPurchases();
     if (id === 'winCustomers') renderCustomers();
+    if (id === 'winSuppliers') renderSuppliers();
     if (id === 'winExpenses') renderExpenses();
     if (id === 'winTech') renderTech();
     if (id === 'winInvoices') { renderInvoices(); renderCurrentOrder(); }
@@ -150,6 +155,65 @@ window.deleteSavedCalculation = (idx) => {
     saveState();
     renderSavedList();
 };
+
+// --- DASHBOARD ---
+function renderDashboard() {
+    const win = document.getElementById('main-content');
+    if(!win) return;
+
+    // Stats
+    const totalSales = state.invoices.reduce((s, i) => s + i.total, 0);
+    const totalExpenses = state.expenses.reduce((s, e) => s + e.amount, 0) + state.purchases.reduce((s, p) => s + p.total, 0);
+    const totalInvValue = state.inventory.reduce((s, i) => s + (i.stock * i.avgCost), 0);
+    const pendingInvoices = state.invoices.filter(i => i.status === 'Pending').length;
+
+    document.getElementById('stat-sales').innerText = totalSales.toLocaleString('es-AR');
+    document.getElementById('stat-expenses').innerText = totalExpenses.toLocaleString('es-AR');
+    document.getElementById('stat-inventory').innerText = totalInvValue.toLocaleString('es-AR');
+    document.getElementById('stat-pending').innerText = pendingInvoices;
+
+    // Top Customers
+    const custVolume = {};
+    state.invoices.forEach(inv => {
+        custVolume[inv.customerId] = (custVolume[inv.customerId] || 0) + inv.total;
+    });
+    const sortedCusts = Object.entries(custVolume).sort((a,b) => b[1] - a[1]).slice(0,5);
+    const topBody = document.getElementById('topCustomersBody');
+    if(topBody) {
+        topBody.innerHTML = sortedCusts.map(([cid, vol]) => {
+            const c = state.customers.find(x => x.cid === cid) || { name: 'Consumidor Final' };
+            return `<tr><td>${c.name}</td><td class="text-right"><strong>$${vol.toLocaleString('es-AR')}</strong></td></tr>`;
+        }).join('');
+    }
+
+    // Trend Chart
+    const ctx = document.getElementById('salesTrendChart');
+    if(ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Ventas Totales', 'Gastos Totales'],
+                datasets: [{
+                    label: 'Monto $',
+                    data: [totalSales, totalExpenses],
+                    backgroundColor: ['#22c55e', '#ef4444']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+    }
+}
+
+// --- TUTORIAL ---
+function toggleTutorial() {
+    const active = document.getElementById('tutorialToggle').checked;
+    const texts = document.querySelectorAll('.tutorial-text');
+    texts.forEach(t => {
+        if(active) t.classList.remove('hidden');
+        else t.classList.add('hidden');
+    });
+}
+window.toggleTutorial = toggleTutorial;
 
 // --- MODULE: INVOICES ---
 function toggleNewInvoice() {
@@ -324,6 +388,35 @@ function renderCustomers() {
 window.addCustomer = () => { state.customers.push({ name: document.getElementById('cust-name').value, cid: document.getElementById('cust-id').value }); saveState(); renderCustomers(); };
 window.deleteCustomer = (idx) => { state.customers.splice(idx,1); saveState(); renderCustomers(); };
 
+function renderSuppliers() {
+    const body = document.getElementById('suppliersBody'); if (!body) return;
+    body.innerHTML = state.suppliers.map((s, idx) => `<tr>
+        <td><strong>${s.name}</strong><br><small class="text-muted">${s.notes || ''}</small></td>
+        <td>${s.phone || '-'}</td>
+        <td>${s.web ? `<a href="${s.web}" target="_blank" class="btn btn-xs btn-link"><i class="fas fa-external-link-alt"></i></a>` : '-'}</td>
+        <td class="text-right"><button class="btn btn-link" onclick="deleteSupplier(${idx})"><i class="fas fa-trash"></i></button></td>
+    </tr>`).join('');
+}
+window.renderSuppliers = renderSuppliers;
+
+window.addSupplier = () => {
+    const name = document.getElementById('sup-name').value;
+    if (!name) return alert("Ingrese el nombre");
+    state.suppliers.push({
+        name,
+        web: document.getElementById('sup-web').value,
+        phone: document.getElementById('sup-phone').value,
+        notes: document.getElementById('sup-notes').value
+    });
+    saveState(); renderSuppliers();
+    document.getElementById('sup-name').value = '';
+    document.getElementById('sup-web').value = '';
+    document.getElementById('sup-phone').value = '';
+    document.getElementById('sup-notes').value = '';
+};
+
+window.deleteSupplier = (idx) => { if(confirm("¿Eliminar proveedor?")) { state.suppliers.splice(idx,1); saveState(); renderSuppliers(); } };
+
 function renderPurchases() {
     const body = document.getElementById('purchasesBody'); if (!body) return;
     body.innerHTML = state.purchases.slice().reverse().map(p => `<tr><td>${p.supplier}</td><td><small>${p.desc || '-'}</small></td><td class="text-right">$${p.total.toLocaleString('es-AR')}</td><td class="text-right">${new Date(p.date).toLocaleDateString()}</td></tr>`).join('');
@@ -357,20 +450,95 @@ window.addExpense = () => {
 
 function renderTech() {
     const body = document.getElementById('techBody'); if (!body) return;
-    body.innerHTML = state.techLogs.map(l => `<tr><td>${l.date}</td><td>${l.machine}</td><td>${l.action}</td><td>${l.user}</td></tr>`).join('');
+
+    const logs = [
+        ...state.techLogs.map(l => ({ ...l, type: 'Mantenimiento', detail: `${l.machine}: ${l.action}` })),
+        ...state.materialFailures.map(f => ({ ...f, type: 'Fallo Material', detail: `${f.material} (${f.qty}): ${f.reason}` })),
+        ...state.returns.map(r => ({ ...r, type: 'Devolución', detail: `${r.customer}: $${r.amount}` }))
+    ].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    body.innerHTML = logs.map(l => `<tr>
+        <td>${new Date(l.date).toLocaleString()}</td>
+        <td><span class="badge ${l.type==='Mantenimiento'?'badge-primary':l.type==='Devolución'?'badge-warning':'badge-danger'}">${l.type}</span></td>
+        <td>${l.detail}</td>
+        <td>${l.user}</td>
+    </tr>`).join('');
 }
 window.addTechLog = () => {
     const machine = document.getElementById('tech-machine').value;
     const action = document.getElementById('tech-action').value;
-    if (machine && action) { state.techLogs.push({ date: new Date().toLocaleString(), machine, action, user: state.currentUser }); saveState(); renderTech(); }
+    if (machine && action) { state.techLogs.push({ date: new Date().toISOString(), machine, action, user: state.currentUser }); saveState(); renderTech(); }
+};
+window.addFailure = () => {
+    const material = document.getElementById('fail-material').value;
+    const qty = document.getElementById('fail-qty').value;
+    const reason = document.getElementById('fail-reason').value;
+    if (material) { state.materialFailures.push({ date: new Date().toISOString(), material, qty, reason, user: state.currentUser }); saveState(); renderTech(); }
+};
+window.addReturn = () => {
+    const customer = document.getElementById('ret-cust').value;
+    const amount = parseFloat(document.getElementById('ret-amount').value);
+    if (customer) { state.returns.push({ date: new Date().toISOString(), customer, amount, user: state.currentUser }); saveState(); renderTech(); }
 };
 
 function exportToExcel() {
     const wb = XLSX.utils.book_new();
-    const invData = state.invoices.map(i => ({ ID: i.id, Cliente: i.customerId, Total: i.total, Fecha: i.date }));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(invData), "Facturas");
+
+    // 1. Resumen Financiero
+    const totalSales = state.invoices.reduce((s, i) => s + i.total, 0);
+    const totalPurchases = state.purchases.reduce((s, p) => s + p.total, 0);
+    const totalExpenses = state.expenses.reduce((s, e) => s + e.amount, 0);
+    const totalReturns = state.returns.reduce((s, r) => s + r.amount, 0);
+    const profit = totalSales - totalPurchases - totalExpenses - totalReturns;
+
+    const summaryData = [
+        { Concepto: 'Ventas Totales', Monto: totalSales },
+        { Concepto: 'Compras de Materia', Monto: totalPurchases },
+        { Concepto: 'Gastos Operativos', Monto: totalExpenses },
+        { Concepto: 'Devoluciones', Monto: totalReturns },
+        { Concepto: 'GANANCIA NETA', Monto: profit }
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), "Resumen Financiero");
+
+    // 2. Registro de Ventas
+    const salesData = state.invoices.map(i => {
+        const c = state.customers.find(x => x.cid === i.customerId) || { name: 'Consumidor Final' };
+        return {
+            ID: i.id,
+            Cliente: c.name,
+            Fecha: new Date(i.date).toLocaleDateString(),
+            Monto: i.total,
+            Estado: i.status,
+            Vendedor: i.user
+        };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesData), "Registro de Ventas");
+
+    // 3. Compras y Materia
+    const purchasesData = state.purchases.map(p => ({
+        Proveedor: p.supplier,
+        Producto: p.product,
+        Cantidad: p.qty,
+        PrecioUnit: p.unit,
+        Total: p.total,
+        Fecha: p.date
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(purchasesData), "Compras");
+
+    // 4. Proveedores
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.suppliers), "Proveedores");
+
+    // 5. Novedades (Fallos y Devoluciones)
+    const newsData = [
+        ...state.materialFailures.map(f => ({ Tipo: 'FALLO MATERIAL', Detalle: f.material, Cant: f.qty, Motivo: f.reason, Fecha: f.date })),
+        ...state.returns.map(r => ({ Tipo: 'DEVOLUCION', Detalle: r.customer, Monto: r.amount, Motivo: '-', Fecha: r.date }))
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(newsData), "Novedades");
+
+    // 6. Inventario
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.inventory), "Inventario");
-    XLSX.writeFile(wb, "KAIA_ERP_Data.xlsx");
+
+    XLSX.writeFile(wb, `KAIA_REPORTE_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 window.exportToExcel = exportToExcel;
 

@@ -35,6 +35,9 @@
     <nav id="sidebar" class="hidden">
         <div class="brand">KAIA ERP</div>
         <div class="nav-links">
+            <a href="#" class="nav-item" onclick="showPage('winDashboard')">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
             <a href="#" class="nav-item" onclick="showPage('winInvoices')">
                 <i class="fas fa-file-invoice"></i> Ventas
             </a>
@@ -56,6 +59,9 @@
             <a href="#" class="nav-item" onclick="showPage('winCustomers')">
                 <i class="fas fa-users"></i> Clientes
             </a>
+            <a href="#" class="nav-item" onclick="showPage('winSuppliers')">
+                <i class="fas fa-truck"></i> Proveedores
+            </a>
             <a href="#" class="nav-item" onclick="showPage('winTech')">
                 <i class="fas fa-tools"></i> Área Técnica
             </a>
@@ -65,6 +71,15 @@
             <a href="#" class="nav-item" onclick="exportToExcel()">
                 <i class="fas fa-file-excel"></i> Exportar
             </a>
+            <div style="padding: 16px 24px; border-top: 1px solid var(--sidebar-active-bg); margin-top: 10px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                    <span><i class="fas fa-graduation-cap"></i> Modo Tutorial</span>
+                    <label class="switch">
+                        <input type="checkbox" id="tutorialToggle" onchange="toggleTutorial()">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
         </div>
         <div class="user-info">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -73,6 +88,61 @@
             </div>
         </div>
     </nav>
+
+    <!-- Template: Suppliers -->
+    <template id="tpl-winSuppliers">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="page-title">Directorio de Proveedores</h2>
+                <p class="text-muted">Gestione los contactos y listas de precios de sus proveedores.</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Agregar Proveedor</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Nombre / Razón Social</label>
+                            <input type="text" id="sup-name" class="form-control" placeholder="Ej: Filamentos 3D S.A.">
+                        </div>
+                        <div class="form-group">
+                            <label>Sitio Web / Catálogo</label>
+                            <input type="text" id="sup-web" class="form-control" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono / Contacto</label>
+                            <input type="text" id="sup-phone" class="form-control" placeholder="+54 ...">
+                        </div>
+                        <div class="form-group">
+                            <label>Notas / Precios</label>
+                            <textarea id="sup-notes" class="form-control" placeholder="Precios de referencia, tiempos de entrega..."></textarea>
+                        </div>
+                        <button onclick="addSupplier()" class="btn btn-primary btn-block">Guardar Proveedor</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">Proveedores Registrados</div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Contacto</th>
+                                    <th>Web</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suppliersBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 
     <!-- Main Wrapper -->
     <div id="desktop" class="hidden">
@@ -99,6 +169,65 @@
 
     <!-- Templates -->
     <div id="templates" style="display:none">
+        <!-- Dashboard Template -->
+        <div id="tpl-winDashboard">
+            <div class="page-header">
+                <h1 class="page-title">Panel Corporativo</h1>
+                <p class="page-subtitle">Métricas clave del negocio en tiempo real</p>
+                <div class="tutorial-text hidden">Bienvenido al Dashboard. Aquí verá un resumen financiero de su empresa.</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px">
+                <div class="card" style="margin-bottom:0">
+                    <div class="card-body">
+                        <div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; margin-bottom: 8px">Facturación Mensual</div>
+                        <div style="font-size: 28px; font-weight: 700; color: var(--success)">$<span id="stat-sales">0</span></div>
+                        <div class="tutorial-text hidden">Suma total de facturas emitidas este mes.</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:0">
+                    <div class="card-body">
+                        <div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; margin-bottom: 8px">Gastos del Mes</div>
+                        <div style="font-size: 28px; font-weight: 700; color: var(--danger)">$<span id="stat-expenses">0</span></div>
+                        <div class="tutorial-text hidden">Suma de todos los egresos y compras registradas.</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:0">
+                    <div class="card-body">
+                        <div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; margin-bottom: 8px">Valor de Inventario</div>
+                        <div style="font-size: 28px; font-weight: 700; color: var(--primary)">$<span id="stat-inventory">0</span></div>
+                        <div class="tutorial-text hidden">Capital actual invertido en mercadería (WAC).</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:0">
+                    <div class="card-body">
+                        <div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; margin-bottom: 8px">Facturas Pendientes</div>
+                        <div style="font-size: 28px; font-weight: 700; color: var(--warning)"><span id="stat-pending">0</span></div>
+                        <div class="tutorial-text hidden">Comprobantes emitidos que aún no han sido cobrados.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px">
+                <div class="card">
+                    <div class="card-header">Tendencia de Ventas</div>
+                    <div class="card-body">
+                        <canvas id="salesTrendChart" style="max-height: 300px; width: 100%"></canvas>
+                        <div class="tutorial-text hidden">Gráfico comparativo de ingresos vs gastos en los últimos periodos.</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Top Clientes</div>
+                    <div class="card-body" style="padding:0">
+                        <table class="table">
+                            <tbody id="topCustomersBody"></tbody>
+                        </table>
+                        <div class="tutorial-text hidden" style="padding: 12px">Los 5 clientes con mayor volumen de compra histórico.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Invoices Template -->
         <div id="tpl-winInvoices">
             <div class="page-header">
@@ -118,14 +247,17 @@
             <div id="new-invoice-pane" class="card hidden">
                 <div class="card-header">Emisión de Factura</div>
                 <div class="card-body">
+                    <div class="tutorial-text hidden" style="margin-bottom: 15px">Aquí puede crear una nueva factura. Los ítems se cargan desde las calculadoras de producción.</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                         <div class="form-group">
                             <label>Cliente</label>
                             <select id="inv-cust-select" class="form-control"></select>
+                            <div class="tutorial-text hidden">Seleccione un cliente registrado o deje vacío para Consumidor Final.</div>
                         </div>
                         <div class="form-group">
                             <label>Vencimiento</label>
                             <input type="date" id="inv-due-date" class="form-control">
+                            <div class="tutorial-text hidden">Fecha límite de pago. Aparecerá en rojo si vence.</div>
                         </div>
                     </div>
                     <div class="card" style="background: var(--bg-main); border-style: dashed;">
@@ -173,26 +305,68 @@
                 <div class="card">
                     <div class="card-header">Perfil Impresora</div>
                     <div class="card-body">
-                        <div class="form-group"><label>Filamento ($/kg)</label><input type="number" id="c3d-filamentPrice" value="25000" class="form-control"></div>
-                        <div class="form-group"><label>Consumo (W)</label><input type="number" id="c3d-consumption" value="120" class="form-control"></div>
-                        <div class="form-group"><label>Luz ($/kWh)</label><input type="number" id="c3d-kwhPrice" value="150" class="form-control"></div>
-                        <div class="form-group"><label>Vida Útil (h)</label><input type="number" id="c3d-lifespan" value="10000" class="form-control"></div>
-                        <div class="form-group"><label>Precio Máquina</label><input type="number" id="c3d-machinePrice" value="450000" class="form-control"></div>
+                        <div class="tutorial-text hidden" style="margin-bottom: 15px">Configure los costos fijos de su hardware. Esto se guarda automáticamente.</div>
+                        <div class="form-group">
+                            <label>Filamento ($/kg)</label>
+                            <input type="number" id="c3d-filamentPrice" value="25000" class="form-control">
+                            <div class="tutorial-text hidden">Costo del rollo de 1kg de material (PLA/PETG/ABS).</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Consumo (W)</label>
+                            <input type="number" id="c3d-consumption" value="120" class="form-control">
+                            <div class="tutorial-text hidden">Potencia eléctrica de la máquina mientras imprime.</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Luz ($/kWh)</label>
+                            <input type="number" id="c3d-kwhPrice" value="150" class="form-control">
+                            <div class="tutorial-text hidden">Precio del kilowatt-hora según su factura de luz.</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Vida Útil (h)</label>
+                            <input type="number" id="c3d-lifespan" value="10000" class="form-control">
+                            <div class="tutorial-text hidden">Horas totales que espera que la máquina dure antes de ser reemplazada.</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Precio Máquina</label>
+                            <input type="number" id="c3d-machinePrice" value="450000" class="form-control">
+                            <div class="tutorial-text hidden">Valor actual de mercado de la impresora.</div>
+                        </div>
                     </div>
                 </div>
                 <div class="card">
                     <div class="card-header">Datos de la Pieza</div>
                     <div class="card-body">
-                        <div class="form-group"><label>Gramos</label><input type="number" id="c3d-grams" value="150" class="form-control"></div>
-                        <div class="form-group"><label>Horas de Impresión</label><input type="number" id="c3d-hours" value="12" class="form-control"></div>
-                        <div class="form-group"><label>Insumos Extra ($)</label><input type="number" id="c3d-extra" value="0" class="form-control"></div>
-                        <div class="form-group"><label>Merma / Tasa Fallo (%)</label><input type="number" id="c3d-fail" value="10" class="form-control"></div>
+                        <div class="tutorial-text hidden" style="margin-bottom: 15px">Ingrese los datos específicos del archivo GCODE.</div>
+                        <div class="form-group">
+                            <label>Gramos</label>
+                            <input type="number" id="c3d-grams" value="150" class="form-control">
+                            <div class="tutorial-text hidden">Peso total de la pieza (incluyendo soportes).</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Horas de Impresión</label>
+                            <input type="number" id="c3d-hours" value="12" class="form-control">
+                            <div class="tutorial-text hidden">Tiempo estimado por el laminador.</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Insumos Extra ($)</label>
+                            <input type="number" id="c3d-extra" value="0" class="form-control">
+                            <div class="tutorial-text hidden">Laca, tornillos, pegamento o packaging.</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Merma / Tasa Fallo (%)</label>
+                            <input type="number" id="c3d-fail" value="10" class="form-control">
+                            <div class="tutorial-text hidden">Margen de seguridad para cubrir piezas que fallan a mitad de impresión.</div>
+                        </div>
                     </div>
                 </div>
                 <div class="card">
                     <div class="card-header">Rentabilidad</div>
                     <div class="card-body">
-                        <div class="form-group"><label>Multiplicador de Ganancia</label><input type="number" id="c3d-mult" value="2.5" step="0.1" class="form-control"></div>
+                        <div class="form-group">
+                            <label>Multiplicador de Ganancia</label>
+                            <input type="number" id="c3d-mult" value="2.5" step="0.1" class="form-control">
+                            <div class="tutorial-text hidden">Factor por el cual se multiplica el costo real para obtener el precio de venta.</div>
+                        </div>
                         <div class="alert alert-info" style="margin-top: 24px">
                             <div style="font-size: 12px; text-transform: uppercase; margin-bottom: 4px">Costo de Producción</div>
                             <div style="font-size: 20px; font-weight: 700">$<span id="c3d-res-cost">0</span></div>
@@ -368,15 +542,89 @@
             </div></div>
         </div>
 
-        <div id="tpl-winTech">
-             <div class="page-header"><h1 class="page-title">Área Técnica</h1></div>
-             <div class="card"><div class="card-body">
-                 <div class="form-group"><label>Máquina</label><input type="text" id="tech-machine" class="form-control"></div>
-                 <div class="form-group"><label>Acción</label><input type="text" id="tech-action" class="form-control"></div>
-                 <button class="btn btn-primary" onclick="addTechLog()">Guardar Log</button>
-             </div></div>
-             <table class="table"><tbody id="techBody"></tbody></table>
+    <template id="tpl-winTech">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="page-title">Área Técnica y Novedades</h2>
+                <p class="text-muted">Registro de mantenimiento, fallos de material y devoluciones.</p>
+            </div>
         </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <!-- Log de Mantenimiento -->
+                <div class="card mb-4">
+                    <div class="card-header">Log de Mantenimiento</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Máquina</label>
+                            <input type="text" id="tech-machine" class="form-control" placeholder="Ender 3 V2 #1">
+                        </div>
+                        <div class="form-group">
+                            <label>Acción / Reparación</label>
+                            <input type="text" id="tech-action" class="form-control" placeholder="Cambio de boquilla">
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="addTechLog()">Registrar Mantenimiento</button>
+                    </div>
+                </div>
+
+                <!-- Registro de Merma / Fallos -->
+                <div class="card mb-4">
+                    <div class="card-header text-danger">Fallo de Material / Merma</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Material / Producto</label>
+                            <input type="text" id="fail-material" class="form-control" placeholder="PLA Marble 1kg">
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad Perdidda (g/u)</label>
+                            <input type="number" id="fail-qty" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Motivo</label>
+                            <input type="text" id="fail-reason" class="form-control" placeholder="Atasco / Nudo">
+                        </div>
+                        <button class="btn btn-danger btn-block" onclick="addFailure()">Registrar Fallo</button>
+                    </div>
+                </div>
+
+                <!-- Registro de Devoluciones -->
+                <div class="card">
+                    <div class="card-header text-warning">Devolución de Cliente</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Cliente / Pedido</label>
+                            <input type="text" id="ret-cust" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Monto a Devolver / Crédito</label>
+                            <input type="number" id="ret-amount" class="form-control">
+                        </div>
+                        <button class="btn btn-warning btn-block" onclick="addReturn()">Registrar Devolución</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">Historial de Novedades Técnicas</div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Detalle</th>
+                                    <th>Usuario</th>
+                                </tr>
+                            </thead>
+                            <tbody id="techBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 
     </div>
 
