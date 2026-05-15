@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora 3D - Ender 3 V</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Calculadora de Costos de Impresión 3D</h1>
+            <p>Ender 3 V</p>
+        </header>
+
+        <main class="grid-container">
+            <!-- Perfil de Impresora -->
+            <section class="card">
+                <h2>Perfil de Impresora</h2>
+                <div class="input-group">
+                    <label for="printerName">Nombre:</label>
+                    <input type="text" id="printerName" value="Ender 3 V">
+                </div>
+                <div class="input-group">
+                    <label for="consumption">Consumo (Watts):</label>
+                    <input type="number" id="consumption" value="120">
+                </div>
+                <div class="input-group">
+                    <label for="machinePrice">Precio Máquina ($):</label>
+                    <input type="number" id="machinePrice" value="55000">
+                </div>
+                <div class="input-group">
+                    <label for="lifespan">Vida Útil (Horas):</label>
+                    <input type="number" id="lifespan" value="10000">
+                </div>
+            </section>
+
+            <!-- Gastos Fijos -->
+            <section class="card">
+                <h2>Gastos Fijos</h2>
+                <div class="input-group">
+                    <label for="filamentPrice">Precio Filamento (1kg):</label>
+                    <input type="number" id="filamentPrice" value="3500">
+                </div>
+                <div class="input-group">
+                    <label for="kwhPrice">Precio kWh ($):</label>
+                    <input type="number" id="kwhPrice" value="15">
+                </div>
+                <div class="input-group">
+                    <label for="errorMargin">Margen de Error (%):</label>
+                    <input type="number" id="errorMargin" value="5">
+                </div>
+                <div class="input-group">
+                    <label for="failureRate">Tasa de Fallos (%):</label>
+                    <input type="number" id="failureRate" value="0">
+                </div>
+            </section>
+
+            <!-- Datos de la Pieza -->
+            <section class="card">
+                <h2>Datos de la Pieza</h2>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="hours">Horas:</label>
+                        <input type="number" id="hours" value="5">
+                    </div>
+                    <div class="input-group">
+                        <label for="minutes">Minutos:</label>
+                        <input type="number" id="minutes" value="30">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="grams">Gramos:</label>
+                    <input type="number" id="grams" value="150">
+                </div>
+                <div class="input-group">
+                    <label for="extraInsumos">Insumos Extra ($):</label>
+                    <input type="number" id="extraInsumos" value="50">
+                </div>
+            </section>
+
+            <!-- Ganancia -->
+            <section class="card">
+                <h2>Ganancia</h2>
+                <div class="input-group">
+                    <label for="multiplier">Multiplicador:</label>
+                    <input type="number" id="multiplier" step="0.1" value="2.5">
+                </div>
+            </section>
+
+            <!-- Resultados -->
+            <section class="card results">
+                <h2>Resultados</h2>
+                <div class="result-item">
+                    <span>Costo Material:</span>
+                    <span id="resMaterial">$ 0.00</span>
+                </div>
+                <div class="result-item">
+                    <span>Costo Luz:</span>
+                    <span id="resLight">$ 0.00</span>
+                </div>
+                <div class="result-item">
+                    <span>Desgaste Máquina:</span>
+                    <span id="resWear">$ 0.00</span>
+                </div>
+                <div class="result-item total-cost">
+                    <span>Costo Total:</span>
+                    <span id="resTotalCost">$ 0.00</span>
+                </div>
+                <div class="result-item to-charge">
+                    <span>Total a Cobrar:</span>
+                    <span id="resToCharge">$ 0.00</span>
+                </div>
+                <div class="result-item ml-price">
+                    <span>Precio MercadoLibre (14%):</span>
+                    <span id="resMLPrice">$ 0.00</span>
+                </div>
+            </section>
+
+            <!-- Gráfica de Sensibilidad -->
+            <section class="card chart-section">
+                <h2>Sensibilidad</h2>
+                <div class="chart-container">
+                    <canvas id="weightChart"></canvas>
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </section>
+        </main>
+
+        <!-- Menú Flotante -->
+        <div id="floatingMenu" class="floating-menu">
+            <button id="menuToggle" class="menu-btn">☰</button>
+            <nav id="menuContent" class="menu-content hidden">
+                <button id="btnManual">Manual de Uso</button>
+                <button id="btnSave">Guardar Cálculo</button>
+                <button id="btnList">Ver Guardados</button>
+            </nav>
+        </div>
+
+        <!-- Modales -->
+        <div id="modalManual" class="modal hidden">
+            <div class="modal-card">
+                <span class="close">&times;</span>
+                <div id="manualContent"></div>
+            </div>
+        </div>
+
+        <div id="modalList" class="modal hidden">
+            <div class="modal-card">
+                <span class="close">&times;</span>
+                <h2>Cálculos Guardados</h2>
+                <ul id="savedList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
