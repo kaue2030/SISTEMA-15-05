@@ -1,74 +1,184 @@
-/* Resetting floating window styles for the Yeti clone */
-body.yeti-clone {
-    background-color: #ffffff;
-    font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: #222222;
+:root {
+    --backgroundOpacityMurky: rgba(255, 255, 255, 0.95);
+    --onBackgroundLight: rgba(36, 36, 36, 0.10);
+    --background: #FFF;
+    --onBackground: #242424;
+    --accent: #0F71F0;
+    --backgroundShadow: rgba(0, 0, 0, 0.14);
+    --onAccent: #FFF;
+    --onAccentDisabled: #B2D4FC;
+    --onBackgroundDisabled: #919191;
+    --onBackgroundSecondary: #5B5B5B;
+    --onBackgroundExtraLight: #F4F4F4;
+    --accentHighContrast: #0E68DD;
+    --backgroundButtonDisabled: rgba(68, 68, 68, 0.10);
 }
 
-#pacioli-nav {
-    border-bottom: 3px solid #008cba;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+@font-face {
+    font-family: "Inter";
+    src: url(https://pacioli.greconsult.com/assets/fonts/Inter-Regular.woff2) format("woff2");
+    font-weight: 400;
 }
 
-.page-header {
-    margin-top: 20px;
-    border-bottom: 2px solid #eeeeee;
-    padding-bottom: 10px;
+body {
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #222;
+    background-color: #fff;
+    padding-top: 55px; /* Height of fixed navbar */
+}
+
+.navbar-default {
+    background-color: #008cba;
+    border-color: #0079a5;
+    min-height: 45px;
+}
+
+.navbar-default .navbar-brand {
+    color: #fff;
+    height: 45px;
+    padding: 12.5px 15px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.navbar-default .navbar-nav > li > a {
+    color: #fff;
+    padding-top: 12.5px;
+    padding-bottom: 12.5px;
+    line-height: 20px;
+}
+
+.navbar-default .navbar-nav > li > a:hover,
+.navbar-default .navbar-nav > li > a:focus {
+    color: #fff;
+    background-color: #0079a5;
+}
+
+.navbar-default .navbar-nav > .active > a,
+.navbar-default .navbar-nav > .active > a:hover,
+.navbar-default .navbar-nav > .active > a:focus {
+    color: #fff;
+    background-color: #00668f;
+}
+
+.navbar-default .navbar-toggle {
+    border-color: transparent;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.navbar-default .navbar-toggle:hover,
+.navbar-default .navbar-toggle:focus {
+    background-color: #0079a5;
+}
+
+/* Sub-toolbar spacing */
+.container-fluid {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    border-radius: 3px;
+}
+
+.btn-success {
+    color: #fff;
+    background-color: #43ac6a;
+    border-color: #3c9a5d;
+}
+
+.btn-info {
+    color: #fff;
+    background-color: #5bc0de;
+    border-color: #46b8da;
+}
+
+.nav-tabs {
+    border-bottom: 1px solid #ddd;
+}
+
+.nav-tabs > li > a {
+    margin-right: 2px;
+    line-height: 1.42857143;
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    color: #008cba;
+}
+
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:focus {
+    color: #555;
+    cursor: default;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-bottom-color: transparent;
+}
+
+.badge {
+    background-color: #999;
+}
+
+/* Table strictly following reference */
+.table-hover > tbody > tr:hover {
+    background-color: #f5f5f5;
+}
+
+.table > thead > tr > th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #ddd;
+    font-weight: bold;
+}
+
+.table > tbody > tr > td {
+    padding: 8px;
+    line-height: 1.42857143;
+    vertical-align: top;
+    border-top: 1px solid #ddd;
+}
+
+.clickableRow {
+    cursor: pointer;
+}
+
+tr.danger { background-color: #f2dede !important; }
+tr.success { background-color: #dff0d8 !important; }
+tr.warning { background-color: #fcf8e3 !important; }
+
+.cancel_clickable {
+    color: #008cba;
+    text-decoration: none;
+    font-weight: normal;
+}
+
+.text-capitalize { text-transform: capitalize; }
+
+.label-default {
+    background-color: #999;
 }
 
 .hidden { display: none !important; }
 
-/* Dashboard refinements */
-.panel { border-radius: 0; box-shadow: none; }
-.panel-primary > .panel-heading { background-color: #008cba; }
-
-/* Table styling to match FS */
-.table > tbody > tr > td {
-    vertical-align: middle;
-    padding: 12px 8px;
-}
-
-.status-paid { background-color: #dff0d8 !important; }
-.status-pending { background-color: #fcf8e3 !important; }
-.status-canceled { background-color: #f2dede !important; color: #a94442; text-decoration: line-through; }
-
-/* New Invoice Pane */
-#new-invoice-pane {
-    margin-top: 10px;
-    border-left: 5px solid #008cba;
-}
-
-/* Forms */
-.form-control {
-    border-radius: 0;
-    box-shadow: none;
-    border: 1px solid #cccccc;
-}
-.btn {
-    border-radius: 2px;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-}
-
-/* Jumbotron (Result area) */
-.jumbotron {
-    background: #f5f5f5;
-    border: 1px solid #e3e3e3;
+/* Dashboard adjustments */
+.panel {
     border-radius: 4px;
 }
 
-/* Chart containers */
-canvas {
-    width: 100% !important;
-}
-
-/* Page content animation */
 #main-content {
-    animation: fadeIn 0.3s ease-in;
+    margin-top: 15px;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+.pagination > .active > a {
+    background-color: #008cba;
+    border-color: #008cba;
+}
+
+.pagination > li > a {
+    color: #008cba;
 }
