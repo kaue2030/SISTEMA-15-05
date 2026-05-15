@@ -335,7 +335,7 @@ function exportToExcel() {
     const invData = state.invoices.map(i => ({ ID: i.id, Cliente: i.customerId, Total: i.total, Fecha: i.date }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(invData), "Facturas");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.inventory), "Inventario");
-    XLSX.writeFile(wb, "Pacioli_ERP_Data.xlsx");
+    XLSX.writeFile(wb, "KAIA_ERP_Data.xlsx");
 }
 window.exportToExcel = exportToExcel;
 
