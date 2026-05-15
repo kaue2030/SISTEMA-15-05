@@ -228,12 +228,15 @@ function renderInvoices() {
 
     body.innerHTML = state.invoices.slice().reverse().map(inv => {
         const cust = state.customers.find(c => c.cid === inv.customerId) || { name: 'Consumidor Final' };
-        return `<tr onclick="viewInvoice('${inv.id}')" style="cursor:pointer">
-            <td><span class="fas ${inv.status === 'Paid' ? 'fa-check-circle text-success' : 'fa-clock text-warning'}"></span></td>
-            <td>${inv.id}</td>
+        return `<tr>
+            <td class="text-center"><span class="fas ${inv.status === 'Paid' ? 'fa-check-circle text-success' : 'fa-clock text-warning'}"></span></td>
+            <td><strong>${inv.id}</strong></td>
             <td>${cust.name}</td>
-            <td class="text-right">$${inv.total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+            <td class="text-right"><strong>$${inv.total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</strong></td>
             <td class="text-right">${new Date(inv.date).toLocaleDateString()}</td>
+            <td class="text-right">
+                <button class="btn btn-xs btn-default" onclick="viewInvoice('${inv.id}')"><i class="fas fa-eye"></i> Ver</button>
+            </td>
         </tr>`;
     }).join('');
 }
@@ -241,40 +244,126 @@ window.renderInvoices = renderInvoices;
 
 function viewInvoice(id) {
     const inv = state.invoices.find(i => i.id === id);
-    if (!inv) return;
+    if (!inv) return alert("Factura no encontrada");
     const cust = state.customers.find(c => c.cid === inv.customerId) || { name: 'Consumidor Final', cid: '---' };
-    document.getElementById('m-inv-title').innerText = `Factura ${inv.id}`;
+
+    document.getElementById('m-inv-title').innerText = `Detalle de Comprobante: ${inv.id}`;
     document.getElementById('m-inv-date').innerText = new Date(inv.date).toLocaleString();
-    document.getElementById('m-inv-cust').innerHTML = `${cust.name} (${cust.cid})`;
+    document.getElementById('m-inv-cust').innerHTML = `${cust.name} <br><small>${cust.cid}</small>`;
     document.getElementById('m-inv-total').innerText = inv.total.toLocaleString('es-AR', { minimumFractionDigits: 2 });
-    document.getElementById('m-inv-items').innerHTML = inv.items.map(i => `<tr><td>${i.desc}</td><td class="text-right">$${i.price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td></tr>`).join('');
-    $('#modal_invoice_details').removeClass('hidden');
+
+    document.getElementById('m-inv-items').innerHTML = inv.items.map(i => `
+        <tr>
+            <td>${i.desc}</td>
+            <td class="text-center">${i.qty || 1}</td>
+            <td class="text-right">$${(i.price || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+            <td class="text-right">$${(i.total || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+        </tr>
+    `).join('');
+
+    const modal = document.getElementById('modal_invoice_details');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex'; // Asegurar que sea visible con flex
 }
+
+window.closeInvoiceModal = () => {
+    const modal = document.getElementById('modal_invoice_details');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+};
 window.viewInvoice = viewInvoice;
 
 function finalizeInvoice() {
     const win = document.getElementById('main-content');
-    if (state.currentOrder.length === 0) return;
+    if (state.currentOrder.length === 0) return alert("No hay ítems para facturar.");
+
+    const totalStr = document.getElementById('currentOrderTotal').innerText.replace(/\./g, '').replace(',', '.');
+    const total = parseFloat(totalStr);
+
     const code = `FAC-${new Date().getFullYear()}${String(state.invoiceCounter++).padStart(3, '0')}`;
     state.invoices.push({
-        id: code, num: state.invoiceCounter-1, date: new Date().toISOString(),
-        dueDate: win.querySelector('#inv-due-date').value, items: [...state.currentOrder],
-        total: state.currentOrder.reduce((s, i) => s + i.price, 0), user: state.currentUser,
-        customerId: win.querySelector('#inv-cust-select').value, obs: win.querySelector('#inv-obs').value, status: 'Pending'
+        id: code,
+        num: state.invoiceCounter - 1,
+        date: new Date().toISOString(),
+        items: state.currentOrder.map(item => {
+            const qty = item.qty || 1;
+            const price = item.price || 0;
+            const dto = item.dto || 0;
+            const neto = (price * qty) * (1 - dto/100);
+            const iva = neto * 0.21;
+            return { ...item, qty, price, dto, neto, iva, total: neto + iva };
+        }),
+        total: total,
+        user: state.currentUser,
+        customerId: win.querySelector('#inv-cust-select').value,
+        obs: win.querySelector('#inv-obs').value,
+        status: 'Pending'
     });
-    state.currentOrder = []; saveState(); toggleNewInvoice(); renderInvoices();
+
+    state.currentOrder = [];
+    saveState();
+    toggleNewInvoice();
+    renderInvoices();
 }
 window.finalizeInvoice = finalizeInvoice;
 
 function renderCurrentOrder() {
-    const list = document.getElementById('currentOrderItems'); if (!list) return;
-    list.innerHTML = state.currentOrder.map((item, idx) => `<li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border)">
-        <span>${item.desc}</span>
-        <span>$${item.price.toLocaleString('es-AR')} <button class="btn btn-link" onclick="removeFromOrder(${idx})" style="padding:0; color:var(--danger)"><i class="fas fa-times"></i></button></span>
-    </li>`).join('');
-    const totalEl = document.getElementById('currentOrderTotal'); if (totalEl) totalEl.innerText = state.currentOrder.reduce((s, i) => s + i.price, 0).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+    const body = document.getElementById('currentOrderItemsTable'); if (!body) return;
+
+    let totalNeto = 0;
+    let totalIva = 0;
+    let totalGral = 0;
+
+    body.innerHTML = state.currentOrder.map((item, idx) => {
+        const qty = item.qty || 1;
+        const price = item.price || 0;
+        const dto = item.dto || 0;
+        const neto = (price * qty) * (1 - dto/100);
+        const iva = neto * 0.21; // Asumimos 21% por defecto como en la referencia
+        const total = neto + iva;
+
+        totalNeto += neto;
+        totalIva += iva;
+        totalGral += total;
+
+        return `<tr>
+            <td>REF-${idx + 100}</td>
+            <td>${item.desc}</td>
+            <td class="text-center">${qty}</td>
+            <td class="text-right">$${price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+            <td class="text-center">${dto}%</td>
+            <td class="text-right">$${neto.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+            <td class="text-right">$${iva.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+            <td class="text-right">
+                $${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                <button class="btn btn-link text-danger" onclick="removeFromOrder(${idx})" style="padding:0"><i class="fas fa-times"></i></button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    if (state.currentOrder.length === 0) {
+        body.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay ítems en la preventa. Cargue datos desde las calculadoras.</td></tr>';
+    }
+
+    document.getElementById('inv-total-neto').innerText = totalNeto.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+    document.getElementById('inv-total-iva').innerText = totalIva.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+    document.getElementById('currentOrderTotal').innerText = totalGral.toLocaleString('es-AR', { minimumFractionDigits: 2 });
 }
 window.removeFromOrder = (idx) => { state.currentOrder.splice(idx,1); renderCurrentOrder(); };
+function addManualLine() {
+    const desc = prompt("Descripción del ítem:");
+    if (!desc) return;
+    const price = parseFloat(prompt("Precio unitario:"));
+    if (isNaN(price)) return;
+    const qty = parseInt(prompt("Cantidad:", "1"));
+    if (isNaN(qty)) return;
+
+    state.currentOrder.push({ desc, price, qty, dto: 0 });
+    saveState();
+    renderCurrentOrder();
+}
+window.addManualLine = addManualLine;
+
 
 // --- PRODUCTION: 3D & DTF ---
 let c3dChart = null;
