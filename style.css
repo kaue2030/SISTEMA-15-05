@@ -165,6 +165,81 @@ body, html {
     font-size: 0.9rem;
 }
 
+/* Dark Theme for Purchases */
+.window[id="winPurchases"] {
+    background: #121212;
+    color: #e0e0e0;
+    border-color: #333;
+}
+
+.window[id="winPurchases"] .win-content {
+    background: #1a1a1a;
+}
+
+.purchases-dark-content {
+    padding: 10px;
+}
+
+.purchase-header-red {
+    color: #e74c3c;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+.purchase-grid-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.pur-input-group input, .pur-input-group select {
+    width: 100%;
+    background: #222;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.pur-hint {
+    color: #666;
+    font-size: 0.75rem;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+.purchase-footer-tools {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #333;
+    padding-top: 15px;
+}
+
+.purchase-footer-tools select {
+    background: #111;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 10px;
+    width: 80%;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.purchases-table-view {
+    margin-top: 20px;
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.purchases-table-view table {
+    color: #ccc;
+}
+
 /* Modules styling */
 h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
 .field { margin-bottom: 10px; }

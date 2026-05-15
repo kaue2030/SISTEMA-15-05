@@ -54,15 +54,21 @@
         <div id="tpl-winManual" title="Manual de Usuario">
             <div class="manual-content">
                 <h2>Guía de Uso del Sistema</h2>
-                <h3>Calculadoras</h3>
-                <p>Usa la <strong>Calculadora 3D</strong> para piezas individuales y la <strong>DTF</strong> para pedidos de camisetas. Puedes agregar ambos tipos a una misma factura usando el botón "Agregar a Factura".</p>
-                <h3>Lógica de Negocio</h3>
+                <h3>1. Calculadora 3D</h3>
+                <p>Calcula el costo real de una impresión considerando:</p>
                 <ul>
-                    <li><strong>3D:</strong> Incluye amortización de máquina y consumo eléctrico exacto.</li>
-                    <li><strong>DTF:</strong> Optimiza compras basándose en el stock actual y precios por volumen.</li>
+                    <li><strong>Material:</strong> (Precio/1000) * Gramos. <em>Ej: $3500/kg * 100g = $350.</em></li>
+                    <li><strong>Energía:</strong> (Watts/1000) * Horas * $/kWh. <em>Ej: 120W * 5h * $15 = $9.</em></li>
+                    <li><strong>Desgaste:</strong> (Precio Máquina / Horas Vida) * Horas. <em>Ej: $55000/10000h * 5h = $27.5.</em></li>
+                    <li><strong>Falla:</strong> Aplica un % extra al costo total para cubrir mermas.</li>
                 </ul>
-                <h3>Exportación</h3>
-                <p>En el módulo de Inventario, puedes exportar un reporte consolidado. Selecciona un rango de fechas para filtrar Compras y Gastos.</p>
+                <h3>2. Calculadora DTF</h3>
+                <p>Optimiza la compra de remeras. Compara comprar packs de 5 vs unidades sueltas según el stock actual.</p>
+                <h3>3. Inventario y Compras</h3>
+                <p>El sistema usa <strong>Costo Promedio Ponderado</strong>. Al registrar una compra vinculada:</p>
+                <p><code>Nuevo Costo = (Stock Actual * Costo Viejo + Total Compra) / Nuevo Stock Total</code></p>
+                <h3>4. Facturación</h3>
+                <p>Puedes combinar ítems de ambas calculadoras en una sola orden y descargar el historial en Excel.</p>
             </div>
         </div>
 
@@ -146,20 +152,32 @@
         </div>
 
         <!-- Purchases Template -->
-        <div id="tpl-winPurchases" title="Compras">
-            <div class="purchases-content">
-                <form id="purchaseForm">
-                    <div class="field"><label>Proveedor:</label><input type="text" id="p-supplier"></div>
-                    <div class="field"><label>Producto:</label><input type="text" id="p-product"></div>
-                    <div class="field"><label>Cant:</label><input type="number" id="p-qty"></div>
-                    <div class="field"><label>Costo Unit:</label><input type="number" id="p-unit"></div>
-                    <button type="button" onclick="registerPurchase()">Registrar Compra</button>
+        <div id="tpl-winPurchases" title="Compras / Reposición">
+            <div class="purchases-dark-content">
+                <div class="purchase-header-red">+ NUEVA COMPRA</div>
+                <form id="purchaseForm" class="purchase-grid-form">
+                    <div class="pur-input-group"><input type="date" id="p-date"></div>
+                    <div class="pur-input-group"><input type="text" id="p-supplier" placeholder="Proveedor"></div>
+                    <div class="pur-input-group"><input type="text" id="p-desc" placeholder="Descripción del ítem"></div>
+                    <div class="pur-input-group">
+                        <select id="p-link-inventory">
+                            <option value="">-- Sin vincular --</option>
+                        </select>
+                    </div>
+                    <div class="pur-input-group"><input type="number" id="p-qty" value="1"></div>
+                    <div class="pur-input-group"><input type="number" id="p-unit" placeholder="Costo unitario"></div>
+                    <div class="pur-input-group full-width"><input type="text" id="p-notes" placeholder="Notas"></div>
+                    <button type="button" class="btn-register-red" onclick="registerPurchase()">+ REGISTRAR</button>
                 </form>
-                <div class="list-container">
-                    <table id="purchasesTable">
-                        <thead><tr><th>Fecha</th><th>Proveedor</th><th>Prod</th><th>Cant</th><th>Total</th></tr></thead>
-                        <tbody id="purchasesBody"></tbody>
-                    </table>
+                <p class="pur-hint">Si vinculas un producto, se suma al stock automáticamente.</p>
+
+                <div class="purchase-footer-tools">
+                    <select id="p-filter-month-selector" onchange="filterPurchases()"></select>
+                    <button class="btn-excel-dark" onclick="exportPurchasesToExcel()">📥 EXCEL</button>
+                </div>
+
+                <div id="purchasesTableContainer" class="purchases-table-view">
+                    <p class="no-purchases">Sin compras este mes.</p>
                 </div>
             </div>
         </div>
@@ -169,39 +187,22 @@
             <div class="expenses-dark-content">
                 <div class="expense-header-red">+ NUEVO GASTO</div>
                 <form id="expenseForm" class="expense-grid-form">
-                    <div class="exp-input-group">
-                        <input type="date" id="e-date">
-                    </div>
+                    <div class="exp-input-group"><input type="date" id="e-date"></div>
                     <div class="exp-input-group">
                         <select id="e-cat">
-                            <option>Alquiler</option>
-                            <option>Servicios</option>
-                            <option>Marketing</option>
-                            <option>Sueldos</option>
-                            <option>Otros</option>
+                            <option>Alquiler</option><option>Servicios</option><option>Marketing</option><option>Sueldos</option><option>Otros</option>
                         </select>
                     </div>
-                    <div class="exp-input-group">
-                        <input type="text" id="e-concept" placeholder="Descripción">
-                    </div>
-                    <div class="exp-input-group">
-                        <input type="number" id="e-amount" placeholder="Monto">
-                    </div>
-                    <div class="exp-input-group full-width">
-                        <input type="text" id="e-notes" placeholder="Notas">
-                    </div>
+                    <div class="exp-input-group"><input type="text" id="e-concept" placeholder="Descripción"></div>
+                    <div class="exp-input-group"><input type="number" id="e-amount" placeholder="Monto"></div>
+                    <div class="exp-input-group full-width"><input type="text" id="e-notes" placeholder="Notas"></div>
                     <button type="button" class="btn-register-red" onclick="registerExpense()">+ REGISTRAR</button>
                 </form>
-
                 <div class="expense-footer-tools">
-                    <select id="e-filter-month-selector" onchange="filterExpenses()">
-                        <!-- Dynamic options -->
-                    </select>
+                    <select id="e-filter-month-selector" onchange="filterExpenses()"></select>
                     <button class="btn-excel-dark" onclick="exportExpensesToExcel()">📥 EXCEL</button>
                 </div>
-
                 <div id="expensesTableContainer" class="expenses-table-view">
-                    <!-- Dynamic expense list -->
                     <p class="no-expenses">Sin gastos este mes.</p>
                 </div>
             </div>
