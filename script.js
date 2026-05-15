@@ -369,38 +369,68 @@ window.addManualLine = addManualLine;
 let c3dChart = null;
 function calculate3D() {
     const win = document.getElementById('main-content');
-    const consumption = parseFloat(win.querySelector('#c3d-consumption').value) || 0;
-    const machinePrice = parseFloat(win.querySelector('#c3d-machinePrice').value) || 0;
+    if (!win.querySelector('#c3d-filamentPrice')) return;
+
     const filamentPrice = parseFloat(win.querySelector('#c3d-filamentPrice').value) || 0;
-    const lifespan = parseFloat(win.querySelector('#c3d-lifespan').value) || 1;
     const kwhPrice = parseFloat(win.querySelector('#c3d-kwhPrice').value) || 0;
-    const hours = parseFloat(win.querySelector('#c3d-hours').value) || 0;
+    const consumption = parseFloat(win.querySelector('#c3d-consumption').value) || 0;
+    const lifespan = parseFloat(win.querySelector('#c3d-lifespan').value) || 1;
+    const spareParts = parseFloat(win.querySelector('#c3d-spareParts').value) || 0;
+    const errorMarginPct = parseFloat(win.querySelector('#c3d-errorMargin').value) || 0;
+
     const grams = parseFloat(win.querySelector('#c3d-grams').value) || 0;
+    const hours = parseFloat(win.querySelector('#c3d-hours').value) || 0;
     const extra = parseFloat(win.querySelector('#c3d-extra').value) || 0;
-    const fail = parseFloat(win.querySelector('#c3d-fail').value) || 0;
+    const failRate = parseFloat(win.querySelector('#c3d-fail').value) || 0;
     const mult = parseFloat(win.querySelector('#c3d-mult').value) || 1;
 
+    // Calculations based on the screenshot logic
     const matCost = (filamentPrice / 1000) * grams;
     const energyCost = (consumption / 1000) * hours * kwhPrice;
-    const machineWear = (machinePrice / lifespan) * hours;
+    const machineWear = (spareParts / lifespan) * hours;
 
-    const cost = (matCost + energyCost + machineWear + extra) * (1 + fail / 100);
-    const sale = cost * mult;
+    const subtotalBase = matCost + energyCost + machineWear;
+    const errorMarginValue = subtotalBase * (errorMarginPct / 100);
 
-    win.querySelector('#c3d-res-cost').innerText = cost.toLocaleString('es-AR', { minimumFractionDigits: 2 });
-    win.querySelector('#c3d-res-price').innerText = sale.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+    const failLoss = (subtotalBase + errorMarginValue) * (failRate / 100);
+    const costNoInsumos = subtotalBase + errorMarginValue + failLoss;
 
+    const insumosPlus = extra * 1.3;
+    const finalCost = costNoInsumos + insumosPlus;
+    const salePrice = finalCost * mult;
+    const profit = salePrice - finalCost;
+    const marginPct = finalCost > 0 ? (profit / salePrice) * 100 : 0;
+
+    // Update UI
+    const fmt = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+    win.querySelector('#c3d-res-material').innerText = matCost.toLocaleString('es-AR', fmt);
+    win.querySelector('#c3d-res-luz').innerText = energyCost.toLocaleString('es-AR', fmt);
+    win.querySelector('#c3d-res-desgaste').innerText = machineWear.toLocaleString('es-AR', fmt);
+    win.querySelector('#c3d-res-error').innerText = errorMarginValue.toLocaleString('es-AR', fmt);
+    win.querySelector('#c3d-res-fail-pct').innerText = failRate;
+    win.querySelector('#c3d-res-fallos').innerText = failLoss.toLocaleString('es-AR', fmt);
+    win.querySelector('#c3d-res-cost-no-insumos').innerText = costNoInsumos.toLocaleString('es-AR', fmt);
+    win.querySelector('#c3d-res-insumos-plus').innerText = insumosPlus.toLocaleString('es-AR', fmt);
+
+    win.querySelector('#c3d-res-price').innerText = salePrice.toLocaleString('es-AR', fmt);
+    win.querySelector('#c3d-res-profit').innerText = profit.toLocaleString('es-AR', fmt);
+    win.querySelector('#c3d-res-margin').innerText = marginPct.toFixed(1);
+    win.querySelector('#c3d-res-ml').innerText = (salePrice * 1.2).toLocaleString('es-AR', fmt);
+
+    // Chart
     const ctxEl = win.querySelector('#c3d-chart'); if (!ctxEl) return;
     const labels = []; const prices = []; const margins = [];
-
-    // Sensitivity: Variation in grams
     for (let i = -50; i <= 50; i += 10) {
         const g = Math.max(1, grams + (grams * (i / 100)));
         labels.push(g.toFixed(0) + 'g');
-        const c = ((filamentPrice/1000)*g + energyCost + machineWear + extra) * (1 + fail/100);
-        const s = c * mult;
+        const c_mat = (filamentPrice / 1000) * g;
+        const c_base = c_mat + energyCost + machineWear;
+        const c_err = c_base * (errorMarginPct / 100);
+        const c_fail = (c_base + c_err) * (failRate / 100);
+        const c_total = c_base + c_err + c_fail + insumosPlus;
+        const s = c_total * mult;
         prices.push(s.toFixed(0));
-        margins.push((s - c).toFixed(0));
+        margins.push((s - c_total).toFixed(0));
     }
 
     if (c3dChart) c3dChart.destroy();
@@ -409,15 +439,15 @@ function calculate3D() {
         data: {
             labels,
             datasets: [
-                { label: 'Precio Venta $', data: prices, borderColor: '#3b82f6', tension: 0.3, fill: false },
-                { label: 'Margen $', data: margins, borderColor: '#22c55e', tension: 0.3, fill: false }
+                { label: 'Precio $', data: prices, borderColor: '#ef4444', tension: 0.3, fill: false, pointRadius: 0 },
+                { label: 'Margen $', data: margins, borderColor: '#22c55e', tension: 0.3, fill: false, pointRadius: 0 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top' } }
+            plugins: { legend: { display: false } },
+            scales: { y: { display: false }, x: { grid: { display: false } } }
         }
     });
 }
