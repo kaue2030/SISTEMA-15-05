@@ -1,208 +1,97 @@
 :root {
-    --primary-color: #2c3e50;
-    --secondary-color: #3498db;
-    --accent-color: #e74c3c;
-    --bg-color: #f4f7f6;
-    --card-bg: #ffffff;
-    --text-color: #333;
-    --success-color: #27ae60;
+    --bg: #e2e2e2;
+    --taskbar: #333;
+    --win-bg: #fff;
+    --primary: #2980b9;
+    --accent: #27ae60;
+    --error: #e74c3c;
 }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    margin: 0;
-    padding: 20px;
+body, html {
+    margin: 0; padding: 0;
+    height: 100%; overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    background: #008080; /* Win95 vibe */
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
+/* Login */
+.login-overlay {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.8); z-index: 10000;
+    display: flex; justify-content: center; align-items: center;
 }
-
-header {
-    text-align: center;
-    margin-bottom: 30px;
+.login-box {
+    background: var(--win-bg); padding: 30px; border-radius: 8px;
+    width: 300px; text-align: center;
 }
+.login-box input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
+.login-box button { width: 100%; padding: 10px; background: var(--primary); color: #fff; border:none; cursor: pointer; }
+.error { color: var(--error); font-size: 0.8rem; }
+.hidden { display: none !important; }
 
-h1 { color: var(--primary-color); margin-bottom: 5px; }
-
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
+/* Desktop */
+.desktop { height: 100%; position: relative; }
+.taskbar {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    height: 40px; background: var(--taskbar); color: #fff;
+    display: flex; align-items: center; padding: 0 10px;
+    box-sizing: border-box; z-index: 5000;
 }
-
-.card {
-    background: var(--card-bg);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+.start-btn { padding: 5px 15px; background: #555; cursor: pointer; margin-right: 20px; }
+.task-items button {
+    background: #444; border: 1px solid #666; color: #fff;
+    padding: 5px 10px; margin-right: 5px; cursor: pointer;
 }
+.user-info { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
-.card h2 {
-    font-size: 1.2rem;
-    margin-top: 0;
-    border-bottom: 2px solid var(--secondary-color);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
+/* Start Menu */
+.start-menu {
+    position: absolute; bottom: 45px; left: 5px;
+    background: #c0c0c0; border: 2px solid #fff;
+    border-right-color: #000; border-bottom-color: #000;
+    width: 200px; padding: 5px; z-index: 6000;
 }
+.start-menu button {
+    width: 100%; text-align: left; background: none; border: none;
+    padding: 10px; cursor: pointer; display: block;
+}
+.start-menu button:hover { background: #000080; color: white; }
+.start-menu hr { border: 1px inset #fff; }
 
-.input-group {
-    margin-bottom: 15px;
+/* Window Manager */
+.window {
+    position: absolute; min-width: 300px; min-height: 200px;
+    background: var(--win-bg); border: 2px solid #333;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+    display: flex; flex-direction: column;
 }
+.win-header {
+    background: #2c3e50; color: #fff; padding: 5px 10px;
+    cursor: move; display: flex; justify-content: space-between; align-items: center;
+}
+.win-controls button {
+    background: #e74c3c; color: white; border: none; padding: 2px 8px; cursor: pointer;
+}
+.win-content { flex: 1; overflow: auto; padding: 15px; }
 
-.input-row {
-    display: flex;
-    gap: 10px;
-}
+/* Modules styling */
+h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 0.9rem; font-weight: bold; }
+.field input, .field select { width: 100%; padding: 5px; box-sizing: border-box; }
+.btn-action { background: var(--accent); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; }
 
-.input-row .input-group {
-    flex: 1;
-}
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background: #f2f2f2; }
 
-label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+.card { border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #f9f9f9; }
 
-input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
+.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.dtf-results { background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap; font-size: 0.85rem; }
 
-.results .result-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-}
+.toolbar { margin-bottom: 15px; display: flex; gap: 10px; }
+.toolbar input { padding: 5px; }
 
-.total-cost {
-    font-weight: bold;
-    color: var(--primary-color);
-    border-top: 2px solid #eee;
-    margin-top: 10px;
-}
-
-.to-charge {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--success-color);
-}
-
-.ml-price {
-    font-size: 1.1rem;
-    color: #f39c12;
-}
-
-/* Floating Menu */
-.floating-menu {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 1000;
-}
-
-.menu-btn {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--secondary-color);
-    color: white;
-    font-size: 1.5rem;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-.menu-content {
-    position: absolute;
-    bottom: 70px;
-    right: 0;
-    background: white;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    width: 180px;
-}
-
-.menu-content button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border: none;
-    background: none;
-    text-align: left;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-.menu-content button:hover {
-    background: #f0f0f0;
-}
-
-/* Modal */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-}
-
-.modal-card {
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    max-width: 600px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    position: relative;
-}
-
-.close {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-.hidden {
-    display: none !important;
-}
-
-.chart-section {
-    grid-column: 1 / -1;
-}
-
-.chart-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-@media (max-width: 800px) {
-    .chart-container {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 600px) {
-    .grid-container {
-        grid-template-columns: 1fr;
-    }
-}
+.active-invoice { border: 2px dashed var(--primary); padding: 10px; margin-bottom: 20px; background: #ebf5fb; }

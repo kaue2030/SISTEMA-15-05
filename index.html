@@ -3,156 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora 3D - Ender 3 V</title>
+    <title>Pacioli 3D & DTF - Manager</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Calculadora de Costos de Impresión 3D</h1>
-            <p>Ender 3 V</p>
-        </header>
-
-        <main class="grid-container">
-            <!-- Perfil de Impresora -->
-            <section class="card">
-                <h2>Perfil de Impresora</h2>
-                <div class="input-group">
-                    <label for="printerName">Nombre:</label>
-                    <input type="text" id="printerName" value="Ender 3 V">
-                </div>
-                <div class="input-group">
-                    <label for="consumption">Consumo (Watts):</label>
-                    <input type="number" id="consumption" value="120">
-                </div>
-                <div class="input-group">
-                    <label for="machinePrice">Precio Máquina ($):</label>
-                    <input type="number" id="machinePrice" value="55000">
-                </div>
-                <div class="input-group">
-                    <label for="lifespan">Vida Útil (Horas):</label>
-                    <input type="number" id="lifespan" value="10000">
-                </div>
-            </section>
-
-            <!-- Gastos Fijos -->
-            <section class="card">
-                <h2>Gastos Fijos</h2>
-                <div class="input-group">
-                    <label for="filamentPrice">Precio Filamento (1kg):</label>
-                    <input type="number" id="filamentPrice" value="3500">
-                </div>
-                <div class="input-group">
-                    <label for="kwhPrice">Precio kWh ($):</label>
-                    <input type="number" id="kwhPrice" value="15">
-                </div>
-                <div class="input-group">
-                    <label for="errorMargin">Margen de Error (%):</label>
-                    <input type="number" id="errorMargin" value="5">
-                </div>
-                <div class="input-group">
-                    <label for="failureRate">Tasa de Fallos (%):</label>
-                    <input type="number" id="failureRate" value="0">
-                </div>
-            </section>
-
-            <!-- Datos de la Pieza -->
-            <section class="card">
-                <h2>Datos de la Pieza</h2>
-                <div class="input-row">
-                    <div class="input-group">
-                        <label for="hours">Horas:</label>
-                        <input type="number" id="hours" value="5">
-                    </div>
-                    <div class="input-group">
-                        <label for="minutes">Minutos:</label>
-                        <input type="number" id="minutes" value="30">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="grams">Gramos:</label>
-                    <input type="number" id="grams" value="150">
-                </div>
-                <div class="input-group">
-                    <label for="extraInsumos">Insumos Extra ($):</label>
-                    <input type="number" id="extraInsumos" value="50">
-                </div>
-            </section>
-
-            <!-- Ganancia -->
-            <section class="card">
-                <h2>Ganancia</h2>
-                <div class="input-group">
-                    <label for="multiplier">Multiplicador:</label>
-                    <input type="number" id="multiplier" step="0.1" value="2.5">
-                </div>
-            </section>
-
-            <!-- Resultados -->
-            <section class="card results">
-                <h2>Resultados</h2>
-                <div class="result-item">
-                    <span>Costo Material:</span>
-                    <span id="resMaterial">$ 0.00</span>
-                </div>
-                <div class="result-item">
-                    <span>Costo Luz:</span>
-                    <span id="resLight">$ 0.00</span>
-                </div>
-                <div class="result-item">
-                    <span>Desgaste Máquina:</span>
-                    <span id="resWear">$ 0.00</span>
-                </div>
-                <div class="result-item total-cost">
-                    <span>Costo Total:</span>
-                    <span id="resTotalCost">$ 0.00</span>
-                </div>
-                <div class="result-item to-charge">
-                    <span>Total a Cobrar:</span>
-                    <span id="resToCharge">$ 0.00</span>
-                </div>
-                <div class="result-item ml-price">
-                    <span>Precio MercadoLibre (14%):</span>
-                    <span id="resMLPrice">$ 0.00</span>
-                </div>
-            </section>
-
-            <!-- Gráfica de Sensibilidad -->
-            <section class="card chart-section">
-                <h2>Sensibilidad</h2>
-                <div class="chart-container">
-                    <canvas id="weightChart"></canvas>
-                    <canvas id="timeChart"></canvas>
-                </div>
-            </section>
-        </main>
-
-        <!-- Menú Flotante -->
-        <div id="floatingMenu" class="floating-menu">
-            <button id="menuToggle" class="menu-btn">☰</button>
-            <nav id="menuContent" class="menu-content hidden">
-                <button id="btnManual">Manual de Uso</button>
-                <button id="btnSave">Guardar Cálculo</button>
-                <button id="btnList">Ver Guardados</button>
-            </nav>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-overlay">
+        <div class="login-box">
+            <h1>Acceso al Sistema</h1>
+            <input type="text" id="username" placeholder="Usuario">
+            <input type="password" id="password" placeholder="Contraseña">
+            <button id="btnLogin">Entrar</button>
+            <p id="loginError" class="error hidden">Usuario o contraseña incorrectos</p>
         </div>
+    </div>
 
-        <!-- Modales -->
-        <div id="modalManual" class="modal hidden">
-            <div class="modal-card">
-                <span class="close">&times;</span>
-                <div id="manualContent"></div>
+    <!-- Main Desktop -->
+    <div id="desktop" class="desktop hidden">
+        <div class="taskbar">
+            <div class="start-btn" onclick="toggleStartMenu()">☰ Menú</div>
+            <div id="startMenu" class="start-menu hidden">
+                <button onclick="openWindow('winManual')">📖 Manual</button>
+                <button onclick="openWindow('winSuppliers')">🤝 Proveedores</button>
+                <button onclick="openWindow('winWarehouse')">📦 Almacén 3D</button>
+                <hr>
+                <button id="btnLogoutMenu">Cerrar Sesión</button>
+            </div>
+            <div class="task-items">
+                <button onclick="openWindow('win3D')">Calc 3D</button>
+                <button onclick="openWindow('winDTF')">Calc DTF</button>
+                <button onclick="openWindow('winInventory')">Inventario</button>
+                <button onclick="openWindow('winPurchases')">Compras</button>
+                <button onclick="openWindow('winExpenses')">Gastos</button>
+                <button onclick="openWindow('winInvoices')">Facturas</button>
+            </div>
+            <div class="user-info">
+                <span id="currentUser"></span>
             </div>
         </div>
 
-        <div id="modalList" class="modal hidden">
-            <div class="modal-card">
-                <span class="close">&times;</span>
-                <h2>Cálculos Guardados</h2>
-                <ul id="savedList"></ul>
+        <!-- Windows Container -->
+        <div id="windowContainer"></div>
+    </div>
+
+    <!-- Templates (Hidden) -->
+    <div id="templates" style="display:none">
+        <!-- Manual Template -->
+        <div id="tpl-winManual" title="Manual de Usuario">
+            <div class="manual-content">
+                <h2>Guía de Uso del Sistema</h2>
+                <h3>Calculadoras</h3>
+                <p>Usa la <strong>Calculadora 3D</strong> para piezas individuales y la <strong>DTF</strong> para pedidos de camisetas. Puedes agregar ambos tipos a una misma factura usando el botón "Agregar a Factura".</p>
+                <h3>Lógica de Negocio</h3>
+                <ul>
+                    <li><strong>3D:</strong> Incluye amortización de máquina y consumo eléctrico exacto.</li>
+                    <li><strong>DTF:</strong> Optimiza compras basándose en el stock actual y precios por volumen.</li>
+                </ul>
+                <h3>Exportación</h3>
+                <p>En el módulo de Inventario, puedes exportar un reporte consolidado. Selecciona un rango de fechas para filtrar Compras y Gastos.</p>
             </div>
         </div>
+
+        <!-- 3D Calculator Template -->
+        <div id="tpl-win3D" title="Calculadora 3D">
+            <div class="calc-3d-content">
+                <div class="calc-grid">
+                    <div class="calc-col">
+                        <h3>Perfil & Gastos</h3>
+                        <div class="field"><label>Consumo (W):</label><input type="number" id="c3d-consumption" value="120"></div>
+                        <div class="field"><label>Precio Maq:</label><input type="number" id="c3d-machinePrice" value="55000"></div>
+                        <div class="field"><label>Vida Útil (h):</label><input type="number" id="c3d-lifespan" value="10000"></div>
+                        <div class="field"><label>Precio Fil (1kg):</label><input type="number" id="c3d-filamentPrice" value="3500"></div>
+                        <div class="field"><label>Precio kWh:</label><input type="number" id="c3d-kwhPrice" value="15"></div>
+                    </div>
+                    <div class="calc-col">
+                        <h3>Pieza</h3>
+                        <div class="field"><label>Horas:</label><input type="number" id="c3d-hours" value="5"></div>
+                        <div class="field"><label>Minutos:</label><input type="number" id="c3d-minutes" value="30"></div>
+                        <div class="field"><label>Gramos:</label><input type="number" id="c3d-grams" value="150"></div>
+                        <div class="field"><label>Extras:</label><input type="number" id="c3d-extra" value="50"></div>
+                        <div class="field"><label>Falla (%):</label><input type="number" id="c3d-fail" value="0"></div>
+                        <div class="field"><label>Mult:</label><input type="number" id="c3d-mult" value="2.5" step="0.1"></div>
+                    </div>
+                </div>
+                <div class="calc-results">
+                    <p>Costo: <span id="c3d-res-cost">0</span></p>
+                    <p>Venta: <span id="c3d-res-price">0</span></p>
+                    <button class="btn-action" onclick="addToInvoice('3D')">Agregar a Factura</button>
+                </div>
+                <canvas id="c3d-chart" style="max-height: 150px;"></canvas>
+            </div>
+        </div>
+
+        <!-- DTF Calculator Template -->
+        <div id="tpl-winDTF" title="Calculadora DTF">
+            <div class="calc-dtf-content">
+                <div class="field"><label>Pedido:</label><input type="number" id="cdtf-order" value="13"></div>
+                <div class="field"><label>Stock:</label><input type="number" id="cdtf-stock" value="2"></div>
+                <div class="field"><label>Pack 5 ($):</label><input type="number" id="cdtf-pack5" value="17.75"></div>
+                <div class="field"><label>Suelta ($):</label><input type="number" id="cdtf-single" value="4.5"></div>
+                <div class="field"><label>DTF ($):</label><input type="number" id="cdtf-dtfPrice" value="10"></div>
+                <div class="field"><label>Dibujos/DTF:</label><input type="number" id="cdtf-drawPerDtf" value="3"></div>
+                <div class="field"><label>Venta Unit ($):</label><input type="number" id="cdtf-sellPrice" value="10"></div>
+                <div class="dtf-results" id="cdtf-results"></div>
+                <button class="btn-action" onclick="addToInvoice('DTF')">Agregar a Factura</button>
+            </div>
+        </div>
+
+        <!-- Inventory Template -->
+        <div id="tpl-winInventory" title="Inventario">
+            <div class="inventory-content">
+                <div class="toolbar">
+                    <input type="text" placeholder="Buscar..." oninput="filterTable('inventoryTable', this.value)">
+                    <div class="export-range">
+                        <label>Desde:</label><input type="date" id="export-start">
+                        <label>Hasta:</label><input type="date" id="export-end">
+                        <button onclick="exportToExcel()">Exportar Excel</button>
+                    </div>
+                </div>
+                <table id="inventoryTable">
+                    <thead>
+                        <tr><th>Producto</th><th>Stock</th><th>Costo Prom.</th><th>Valor Total</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody id="inventoryBody"></tbody>
+                </table>
+                <h3>Ajuste de Stock / Movimientos</h3>
+                <div class="field-row">
+                    <input type="text" id="adj-name" placeholder="Producto">
+                    <input type="number" id="adj-qty" placeholder="Cant">
+                    <select id="adj-reason"><option>Compra</option><option>Venta</option><option>Merma</option><option>Ajuste</option></select>
+                    <button onclick="adjustStock()">Aplicar</button>
+                </div>
+                <div class="list-container">
+                    <table id="movementsTable">
+                        <thead><tr><th>Fecha</th><th>Producto</th><th>Cant</th><th>Motivo</th><th>Usuario</th></tr></thead>
+                        <tbody id="movementsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Purchases Template -->
+        <div id="tpl-winPurchases" title="Compras">
+            <div class="purchases-content">
+                <form id="purchaseForm">
+                    <div class="field"><label>Proveedor:</label><input type="text" id="p-supplier"></div>
+                    <div class="field"><label>Producto:</label><input type="text" id="p-product"></div>
+                    <div class="field"><label>Cant:</label><input type="number" id="p-qty"></div>
+                    <div class="field"><label>Costo Unit:</label><input type="number" id="p-unit"></div>
+                    <button type="button" onclick="registerPurchase()">Registrar Compra</button>
+                </form>
+                <div class="list-container">
+                    <table id="purchasesTable">
+                        <thead><tr><th>Fecha</th><th>Proveedor</th><th>Prod</th><th>Cant</th><th>Total</th></tr></thead>
+                        <tbody id="purchasesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expenses Template -->
+        <div id="tpl-winExpenses" title="Gastos">
+            <div class="expenses-content">
+                <form id="expenseForm">
+                    <div class="field"><label>Concepto:</label><input type="text" id="e-concept"></div>
+                    <div class="field"><label>Monto:</label><input type="number" id="e-amount"></div>
+                    <div class="field"><label>Categoría:</label>
+                        <select id="e-cat"><option>Servicios</option><option>Alquiler</option><option>Marketing</option><option>Otros</option></select>
+                    </div>
+                    <button type="button" onclick="registerExpense()">Registrar Gasto</button>
+                </form>
+                <div class="toolbar">
+                    <input type="month" id="e-filter-month" onchange="filterExpenses()">
+                </div>
+                <table id="expensesTable">
+                    <thead><tr><th>ID</th><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Cat</th></tr></thead>
+                    <tbody id="expensesBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Suppliers Template -->
+        <div id="tpl-winSuppliers" title="Proveedores">
+            <div class="suppliers-content">
+                <button onclick="showSupplierForm()">Nuevo Proveedor</button>
+                <div id="supplierList" class="card-grid"></div>
+            </div>
+        </div>
+
+        <!-- Invoices Template -->
+        <div id="tpl-winInvoices" title="Facturación">
+            <div class="invoices-content">
+                <div class="active-invoice">
+                    <h3>Orden Actual</h3>
+                    <ul id="currentOrderItems"></ul>
+                    <p>Total: <span id="currentOrderTotal">0</span></p>
+                    <button onclick="finalizeInvoice()">Cerrar Factura</button>
+                </div>
+                <h3>Historial</h3>
+                <div class="toolbar">
+                    <input type="text" id="inv-search-id" placeholder="Buscar por ID..." oninput="searchInvoice(this.value)">
+                </div>
+                <table id="invoicesTable">
+                    <thead><tr><th>ID</th><th>Fecha</th><th>Items</th><th>Total</th><th>Acciones</th></tr></thead>
+                    <tbody id="invoicesBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Warehouse 3D Template -->
+        <div id="tpl-winWarehouse" title="Almacén 3D">
+            <div class="warehouse-content">
+                <button onclick="showWarehouseForm()">Agregar Producto 3D</button>
+                <div id="warehouseList" class="card-grid"></div>
+            </div>
+        </div>
+
     </div>
 
     <script src="script.js"></script>

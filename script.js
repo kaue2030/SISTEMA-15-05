@@ -1,238 +1,287 @@
+// State Management
+let state = {
+    currentUser: null,
+    inventory: [],
+    movements: [],
+    purchases: [],
+    expenses: [],
+    suppliers: [],
+    warehouse3d: [],
+    invoices: [],
+    currentOrder: [],
+    windows: {}
+};
+
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    const inputs = document.querySelectorAll('input');
-    inputs.forEach(input => {
-        input.addEventListener('input', calculate);
-    });
-
-    // Toggle Menu
-    document.getElementById('menuToggle').addEventListener('click', () => {
-        document.getElementById('menuContent').classList.toggle('hidden');
-    });
-
-    // Modals
-    const modalManual = document.getElementById('modalManual');
-    const modalList = document.getElementById('modalList');
-
-    document.getElementById('btnManual').addEventListener('click', () => {
-        showManual();
-        modalManual.classList.remove('hidden');
-    });
-
-    document.getElementById('btnSave').addEventListener('click', saveCalculation);
-    document.getElementById('btnList').addEventListener('click', () => {
-        renderSavedList();
-        modalList.classList.remove('hidden');
-    });
-
-    document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', (e) => {
-            e.target.closest('.modal').classList.add('hidden');
-        });
-    });
-
-    // Initial Calculation
-    calculate();
+    loadState();
+    setupAuth();
+    setupWindowEvents();
+    restoreWindows();
 });
 
-function calculate() {
-    // Inputs
-    const consumption = parseFloat(document.getElementById('consumption').value) || 0;
-    const machinePrice = parseFloat(document.getElementById('machinePrice').value) || 0;
-    const lifespan = parseFloat(document.getElementById('lifespan').value) || 1;
-    const filamentPrice = parseFloat(document.getElementById('filamentPrice').value) || 0;
-    const kwhPrice = parseFloat(document.getElementById('kwhPrice').value) || 0;
-    const errorMargin = parseFloat(document.getElementById('errorMargin').value) || 0;
-    const failureRate = parseFloat(document.getElementById('failureRate').value) || 0;
-    const hours = parseFloat(document.getElementById('hours').value) || 0;
-    const minutes = parseFloat(document.getElementById('minutes').value) || 0;
-    const grams = parseFloat(document.getElementById('grams').value) || 0;
-    const extraInsumos = parseFloat(document.getElementById('extraInsumos').value) || 0;
-    const multiplier = parseFloat(document.getElementById('multiplier').value) || 1;
-
-    const totalTimeHours = hours + (minutes / 60);
-
-    // Formulas
-    const costMaterial = (filamentPrice / 1000) * grams;
-    const costLight = (consumption / 1000) * totalTimeHours * kwhPrice;
-    const costWear = (machinePrice / lifespan) * totalTimeHours;
-
-    let subTotal = costMaterial + costLight + costWear + extraInsumos;
-
-    // Applying Error Margin and Failure Rate
-    const totalMargin = (errorMargin + failureRate) / 100;
-    const totalCost = subTotal * (1 + totalMargin);
-
-    const toCharge = totalCost * multiplier;
-
-    // MercadoLibre Price (Assuming 14% commission, formula: price = net / (1 - comm))
-    const mlPrice = toCharge / (1 - 0.14);
-
-    // Display Results
-    document.getElementById('resMaterial').innerText = `$ ${costMaterial.toFixed(2)}`;
-    document.getElementById('resLight').innerText = `$ ${costLight.toFixed(2)}`;
-    document.getElementById('resWear').innerText = `$ ${costWear.toFixed(2)}`;
-    document.getElementById('resTotalCost').innerText = `$ ${totalCost.toFixed(2)}`;
-    document.getElementById('resToCharge').innerText = `$ ${toCharge.toFixed(2)}`;
-    document.getElementById('resMLPrice').innerText = `$ ${mlPrice.toFixed(2)}`;
-
-    updateCharts(grams, totalTimeHours, multiplier, filamentPrice, consumption, kwhPrice, machinePrice, lifespan, extraInsumos, errorMargin, failureRate);
+function loadState() {
+    const saved = localStorage.getItem('pacioli_state');
+    if (saved) {
+        state = { ...state, ...JSON.parse(saved) };
+    }
 }
 
-let weightChart = null;
-let timeChart = null;
-
-function updateCharts(baseGrams, baseHours, multiplier, filP, cons, kwhP, mP, life, extra, err, fail) {
-    const weightCtx = document.getElementById('weightChart').getContext('2d');
-    const timeCtx = document.getElementById('timeChart').getContext('2d');
-
-    // Weight Sensitivity
-    const wLabels = [];
-    const wPrices = [];
-    const wProfits = [];
-    for (let i = 5; i <= 15; i++) {
-        const factor = i / 10;
-        const testGrams = baseGrams * factor;
-        wLabels.push(`${testGrams.toFixed(0)}g`);
-        const { tCharge, profit } = getResults(testGrams, baseHours, multiplier, filP, cons, kwhP, mP, life, extra, err, fail);
-        wPrices.push(tCharge);
-        wProfits.push(profit);
-    }
-
-    // Time Sensitivity
-    const tLabels = [];
-    const tPrices = [];
-    const tProfits = [];
-    for (let i = 5; i <= 15; i++) {
-        const factor = i / 10;
-        const testHours = baseHours * factor;
-        tLabels.push(`${testHours.toFixed(1)}h`);
-        const { tCharge, profit } = getResults(baseGrams, testHours, multiplier, filP, cons, kwhP, mP, life, extra, err, fail);
-        tPrices.push(tCharge);
-        tProfits.push(profit);
-    }
-
-    if (weightChart) weightChart.destroy();
-    if (timeChart) timeChart.destroy();
-
-    weightChart = createChart(weightCtx, 'Sensibilidad por Peso (Gramos)', wLabels, wPrices, wProfits);
-    timeChart = createChart(timeCtx, 'Sensibilidad por Tiempo (Horas)', tLabels, tPrices, tProfits);
+function saveState() {
+    localStorage.setItem('pacioli_state', JSON.stringify(state));
 }
 
-function getResults(g, h, m, filP, cons, kwhP, mP, life, extra, err, fail) {
-    const cMat = (filP / 1000) * g;
-    const cLight = (cons / 1000) * h * kwhP;
-    const cWear = (mP / life) * h;
-    const tCost = (cMat + cLight + cWear + extra) * (1 + (err + fail)/100);
-    const tCharge = tCost * m;
-    return {
-        tCharge: parseFloat(tCharge.toFixed(2)),
-        profit: parseFloat((tCharge - tCost).toFixed(2))
+// --- AUTHENTICATION ---
+const USERS = { 'KAUE': 'kaue123', 'PEDRO': 'pedro123' };
+
+function setupAuth() {
+    document.getElementById('btnLogin').onclick = () => {
+        const user = document.getElementById('username').value.toUpperCase();
+        const pass = document.getElementById('password').value;
+        if (USERS[user] && USERS[user] === pass) login(user);
+        else document.getElementById('loginError').classList.remove('hidden');
     };
+    document.getElementById('btnLogoutMenu').onclick = () => {
+        state.currentUser = null; saveState(); location.reload();
+    };
+    if (state.currentUser) login(state.currentUser);
 }
 
-function createChart(ctx, title, labels, prices, profits) {
-    return new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Precio ($)',
-                data: prices,
-                borderColor: '#3498db',
-                tension: 0.1
-            }, {
-                label: 'Ganancia ($)',
-                data: profits,
-                borderColor: '#27ae60',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { title: { display: true, text: title } }
-        }
-    });
+function login(user) {
+    state.currentUser = user;
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('desktop').classList.remove('hidden');
+    document.getElementById('currentUser').innerText = user;
+    saveState();
+    restoreWindows();
 }
 
-function saveCalculation() {
-    const name = document.getElementById('printerName').value + ' - ' + new Date().toLocaleTimeString();
-    const data = {};
-    document.querySelectorAll('input').forEach(input => data[input.id] = input.value);
-
-    let saved = JSON.parse(localStorage.getItem('calculations') || '[]');
-    saved.push({ name, data });
-    localStorage.setItem('calculations', JSON.stringify(saved));
-    alert('Cálculo guardado con éxito');
+function toggleStartMenu() {
+    document.getElementById('startMenu').classList.toggle('hidden');
 }
 
-function renderSavedList() {
-    const list = document.getElementById('savedList');
-    list.innerHTML = '';
-    const saved = JSON.parse(localStorage.getItem('calculations') || '[]');
-
-    saved.forEach((item, index) => {
-        const li = document.createElement('li');
-        li.style.cssText = "margin: 10px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 5px;";
-
-        const span = document.createElement('span');
-        span.innerText = item.name;
-
-        const btnGroup = document.createElement('div');
-        const loadBtn = document.createElement('button');
-        loadBtn.innerText = 'Cargar';
-        loadBtn.onclick = () => { loadCalculation(item.data); document.getElementById('modalList').classList.add('hidden'); };
-
-        const delBtn = document.createElement('button');
-        delBtn.innerText = 'Eliminar';
-        delBtn.onclick = () => { saved.splice(index, 1); localStorage.setItem('calculations', JSON.stringify(saved)); renderSavedList(); };
-
-        btnGroup.appendChild(loadBtn);
-        btnGroup.appendChild(delBtn);
-        li.appendChild(span);
-        li.appendChild(btnGroup);
-        list.appendChild(li);
-    });
-}
-
-function loadCalculation(data) {
-    Object.keys(data).forEach(key => {
-        const el = document.getElementById(key);
-        if (el) el.value = data[key];
-    });
-    calculate();
-}
-
-function showManual() {
-    document.getElementById('manualContent').innerHTML = `
-        <h2>Manual de la Calculadora 3D</h2>
-        <p>Esta herramienta te ayuda a profesionalizar tu negocio de impresión 3D calculando costos reales y márgenes de ganancia.</p>
-
-        <h3>1. Perfil de Impresora</h3>
-        <p>Define los costos operativos de tu máquina:</p>
-        <ul>
-            <li><strong>Consumo (Watts):</strong> Potencia promedio de la impresora (ej. 120W para Ender 3).</li>
-            <li><strong>Precio Máquina:</strong> Cuánto te costó la impresora.</li>
-            <li><strong>Vida Útil:</strong> Horas estimadas antes de necesitar un reemplazo o mantenimiento mayor (estándar: 10,000h).</li>
-        </ul>
-
-        <h3>2. Gastos Fijos e Insumos</h3>
-        <ul>
-            <li><strong>Precio Filamento:</strong> Costo por 1kg de material.</li>
-            <li><strong>Tasa de Fallos:</strong> % extra para cubrir piezas que salen mal o fallos de luz.</li>
-            <li><strong>Margen de Error:</strong> % para insumos invisibles (laca, limpieza, desgaste menor).</li>
-        </ul>
-
-        <h3>3. Fórmulas de Cálculo</h3>
-        <p>La calculadora utiliza las siguientes lógicas:</p>
-        <ul>
-            <li><strong>Costo Luz:</strong> (Watts / 1000) × Horas × Precio kWh</li>
-            <li><strong>Desgaste:</strong> (Precio Máquina / Vida Útil) × Horas</li>
-            <li><strong>Costo Material:</strong> (Precio Filamento / 1000) × Gramos</li>
-        </ul>
-
-        <h3>4. Transformación a Precio de Venta</h3>
-        <p>El <strong>Costo Total</strong> se multiplica por tu <strong>Multiplicador</strong> de ganancia.
-        Si el costo es $100 y usas un multiplicador de 3, el precio base es $300.</p>
-        <p><strong>Precio MercadoLibre:</strong> Se calcula automáticamente sumando una comisión estimada del 14% para que recibas tu ganancia neta deseada.</p>
+// --- WINDOW MANAGER ---
+let zIndexCounter = 100;
+function openWindow(id) {
+    if (document.getElementById(id)) { focusWindow(id); return; }
+    const template = document.getElementById(`tpl-${id}`);
+    const win = document.createElement('div');
+    win.id = id; win.className = 'window'; win.style.zIndex = ++zIndexCounter;
+    const winState = state.windows[id] || { x: 50, y: 50 };
+    win.style.left = winState.x + 'px'; win.style.top = winState.y + 'px';
+    win.innerHTML = `
+        <div class="win-header" onmousedown="startDrag(event, '${id}')">
+            <span>${template.getAttribute('title')}</span>
+            <div class="win-controls"><button onclick="closeWindow('${id}')">X</button></div>
+        </div>
+        <div class="win-content">${template.innerHTML}</div>
     `;
+    document.getElementById('windowContainer').appendChild(win);
+    state.windows[id] = { ...winState, open: true, z: zIndexCounter };
+    saveState();
+    if (id === 'win3D') init3DCalc();
+    if (id === 'winDTF') calculateDTF();
+    renderModule(id);
+}
+
+function closeWindow(id) {
+    const win = document.getElementById(id);
+    if (win) { win.remove(); state.windows[id].open = false; saveState(); }
+}
+
+function focusWindow(id) {
+    const win = document.getElementById(id);
+    if (win) { win.style.zIndex = ++zIndexCounter; state.windows[id].z = zIndexCounter; saveState(); }
+}
+
+function restoreWindows() {
+    for (const id in state.windows) if (state.windows[id].open) openWindow(id);
+}
+
+let activeWin = null; let offset = { x: 0, y: 0 };
+function startDrag(e, id) {
+    activeWin = document.getElementById(id); focusWindow(id);
+    const rect = activeWin.getBoundingClientRect();
+    offset.x = e.clientX - rect.left; offset.y = e.clientY - rect.top;
+    document.addEventListener('mousemove', drag); document.addEventListener('mouseup', stopDrag);
+}
+function drag(e) {
+    if (!activeWin) return;
+    const x = e.clientX - offset.x; const y = e.clientY - offset.y;
+    activeWin.style.left = x + 'px'; activeWin.style.top = y + 'px';
+    state.windows[activeWin.id].x = x; state.windows[activeWin.id].y = y;
+}
+function stopDrag() { activeWin = null; document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', stopDrag); saveState(); }
+
+function setupWindowEvents() {
+    document.addEventListener('input', (e) => {
+        if (e.target.id.startsWith('c3d-')) calculate3D();
+        if (e.target.id.startsWith('cdtf-')) calculateDTF();
+    });
+}
+
+// --- MODULES ---
+let c3dChart = null;
+function init3DCalc() { calculate3D(); }
+function calculate3D() {
+    const consumption = parseFloat(document.getElementById('c3d-consumption').value) || 0;
+    const machinePrice = parseFloat(document.getElementById('c3d-machinePrice').value) || 0;
+    const lifespan = parseFloat(document.getElementById('c3d-lifespan').value) || 1;
+    const filamentPrice = parseFloat(document.getElementById('c3d-filamentPrice').value) || 0;
+    const kwhPrice = parseFloat(document.getElementById('c3d-kwhPrice').value) || 0;
+    const hours = parseFloat(document.getElementById('c3d-hours').value) || 0;
+    const minutes = parseFloat(document.getElementById('c3d-minutes').value) || 0;
+    const grams = parseFloat(document.getElementById('c3d-grams').value) || 0;
+    const extra = parseFloat(document.getElementById('c3d-extra').value) || 0;
+    const fail = parseFloat(document.getElementById('c3d-fail').value) || 0;
+    const mult = parseFloat(document.getElementById('c3d-mult').value) || 1;
+    const totalTime = hours + (minutes / 60);
+    const cost = ((filamentPrice / 1000) * grams + (consumption / 1000) * totalTime * kwhPrice + (machinePrice / lifespan) * totalTime + extra) * (1 + fail / 100);
+    const sale = cost * mult;
+    document.getElementById('c3d-res-cost').innerText = cost.toFixed(2);
+    document.getElementById('c3d-res-price').innerText = sale.toFixed(2);
+    update3DChart(grams, totalTime, mult, filamentPrice, consumption, kwhPrice, machinePrice, lifespan, extra, fail);
+}
+function update3DChart(baseGrams, baseHours, mult, filP, cons, kwhP, mP, life, extra, fail) {
+    const ctxEl = document.getElementById('c3d-chart'); if (!ctxEl) return;
+    const labels = []; const prices = [];
+    for (let i = 5; i <= 15; i++) {
+        const factor = i / 10; const g = baseGrams * factor; labels.push(g.toFixed(0) + 'g');
+        const cost = ((filP/1000)*g + (cons/1000)*baseHours*kwhP + (mP/life)*baseHours + extra) * (1 + fail/100);
+        prices.push((cost * mult).toFixed(2));
+    }
+    if (c3dChart) c3dChart.destroy();
+    c3dChart = new Chart(ctxEl.getContext('2d'), { type: 'line', data: { labels, datasets: [{ label: 'Venta $', data: prices, borderColor: '#3498db' }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+}
+
+function calculateDTF() {
+    const pedido = parseInt(document.getElementById('cdtf-order').value) || 0;
+    const stock = parseInt(document.getElementById('cdtf-stock').value) || 0;
+    const pPack5 = parseFloat(document.getElementById('cdtf-pack5').value) || 0;
+    const pSingle = parseFloat(document.getElementById('cdtf-single').value) || 0;
+    const pDtf = parseFloat(document.getElementById('cdtf-dtfPrice').value) || 0;
+    const dPerDtf = parseInt(document.getElementById('cdtf-drawPerDtf').value) || 1;
+    const pVenta = parseFloat(document.getElementById('cdtf-sellPrice').value) || 0;
+    let faltantes = Math.max(0, pedido - stock);
+    let costA = Math.ceil(faltantes / 5) * pPack5;
+    let costB = (Math.floor(faltantes / 5) * pPack5) + ((faltantes % 5) * pSingle);
+    let costC = faltantes * pSingle;
+    let bestCost = Math.min(costA, costB, costC);
+    let dtfNec = Math.ceil(pedido / dPerDtf);
+    let costTotal = bestCost + (dtfNec * pDtf);
+    let ingresos = pedido * pVenta;
+    document.getElementById('cdtf-results').innerText = `RESULTADO\nCosto: $${costTotal.toFixed(2)}\nIngresos: $${ingresos.toFixed(2)}\nBeneficio: $${(ingresos - costTotal).toFixed(2)}`;
+    state.lastDTF = { total: costTotal, sale: ingresos, desc: `DTF x${pedido}` };
+}
+
+function renderModule(id) {
+    if (id === 'winInventory') { renderInventory(); renderMovements(); }
+    if (id === 'winPurchases') renderPurchases();
+    if (id === 'winExpenses') renderExpenses();
+    if (id === 'winSuppliers') renderSuppliers();
+    if (id === 'winInvoices') renderInvoices();
+    if (id === 'winWarehouse') renderWarehouse();
+}
+
+function renderInventory() {
+    const body = document.getElementById('inventoryBody'); if (!body) return;
+    body.innerHTML = state.inventory.map((item, idx) => `<tr><td>${item.name}</td><td>${item.stock}</td><td>$${item.avgCost.toFixed(2)}</td><td>$${(item.stock * item.avgCost).toFixed(2)}</td><td><button onclick="deleteInventory(${idx})">Eliminar</button></td></tr>`).join('');
+}
+function renderMovements() {
+    const body = document.getElementById('movementsBody'); if (!body) return;
+    body.innerHTML = state.movements.map(m => `<tr><td>${new Date(m.date).toLocaleDateString()}</td><td>${m.name}</td><td>${m.qty}</td><td>${m.reason}</td><td>${m.user}</td></tr>`).join('');
+}
+function adjustStock() {
+    const name = document.getElementById('adj-name').value; const qty = parseInt(document.getElementById('adj-qty').value); const reason = document.getElementById('adj-reason').value;
+    let item = state.inventory.find(i => i.name === name);
+    if (!item) { item = { name, stock: 0, avgCost: 0 }; state.inventory.push(item); }
+    if (reason === 'Venta' || reason === 'Merma') item.stock -= qty; else item.stock += qty;
+    state.movements.push({ date: new Date().toISOString(), name, qty, reason, user: state.currentUser });
+    saveState(); renderInventory(); renderMovements();
+}
+
+function registerPurchase() {
+    const supplier = document.getElementById('p-supplier').value; const product = document.getElementById('p-product').value;
+    const qty = parseInt(document.getElementById('p-qty').value); const unit = parseFloat(document.getElementById('p-unit').value);
+    const total = qty * unit;
+    state.purchases.push({ date: new Date().toISOString(), supplier, product, qty, unit, total, user: state.currentUser });
+    let item = state.inventory.find(i => i.name === product);
+    if (!item) state.inventory.push({ name: product, stock: qty, avgCost: unit });
+    else { const oldVal = item.stock * item.avgCost; item.stock += qty; item.avgCost = (oldVal + total) / item.stock; }
+    saveState(); renderPurchases(); renderInventory();
+}
+function renderPurchases() {
+    const body = document.getElementById('purchasesBody'); if (!body) return;
+    body.innerHTML = state.purchases.map(p => `<tr><td>${new Date(p.date).toLocaleDateString()}</td><td>${p.supplier}</td><td>${p.product}</td><td>${p.qty}</td><td>$${p.total.toFixed(2)}</td></tr>`).join('');
+}
+
+function registerExpense() {
+    const concept = document.getElementById('e-concept').value; const amount = parseFloat(document.getElementById('e-amount').value);
+    const cat = document.getElementById('e-cat').value;
+    state.expenses.push({ id: Date.now().toString().slice(-6), date: new Date().toISOString(), concept, amount, cat, user: state.currentUser });
+    saveState(); renderExpenses();
+}
+function renderExpenses() {
+    const body = document.getElementById('expensesBody'); if (!body) return;
+    body.innerHTML = state.expenses.map(e => `<tr><td>${e.id}</td><td>${new Date(e.date).toLocaleDateString()}</td><td>${e.concept}</td><td>$${e.amount}</td><td>${e.cat}</td></tr>`).join('');
+}
+
+function addToInvoice(type) {
+    const item = type === '3D' ? { desc: 'Impresión 3D', price: parseFloat(document.getElementById('c3d-res-price').innerText) } : { desc: state.lastDTF.desc, price: state.lastDTF.sale };
+    state.currentOrder.push(item); renderCurrentOrder();
+}
+function renderCurrentOrder() {
+    const list = document.getElementById('currentOrderItems'); if (!list) return;
+    list.innerHTML = state.currentOrder.map((item, idx) => `<li>${item.desc} - $${item.price.toFixed(2)} <button onclick="removeFromOrder(${idx})">x</button></li>`).join('');
+    document.getElementById('currentOrderTotal').innerText = state.currentOrder.reduce((sum, i) => sum + i.price, 0).toFixed(2);
+}
+function finalizeInvoice() {
+    if (state.currentOrder.length === 0) return;
+    state.invoices.push({ id: 'INV-' + Math.floor(Math.random()*10000), date: new Date().toISOString(), items: [...state.currentOrder], total: state.currentOrder.reduce((sum, i) => sum + i.price, 0), user: state.currentUser });
+    state.currentOrder = []; saveState(); renderInvoices(); renderCurrentOrder();
+}
+function renderInvoices() {
+    const body = document.getElementById('invoicesBody'); if (!body) return;
+    body.innerHTML = state.invoices.map(inv => `<tr><td>${inv.id}</td><td>${new Date(inv.date).toLocaleDateString()}</td><td>${inv.items.length} items</td><td>$${inv.total.toFixed(2)}</td><td><button onclick="viewInvoice('${inv.id}')">Ver</button></td></tr>`).join('');
+}
+function searchInvoice(val) {
+    document.querySelectorAll('#invoicesTable tbody tr').forEach(r => r.style.display = r.cells[0].innerText.includes(val) ? '' : 'none');
+}
+
+function renderSuppliers() {
+    const list = document.getElementById('supplierList'); if (!list) return;
+    list.innerHTML = state.suppliers.map((s, idx) => `<div class="card"><h4>${s.name}</h4><p>Cat: ${s.cat}</p><p>Editado por: ${s.lastUser}</p></div>`).join('');
+}
+function showSupplierForm() {
+    const name = prompt("Nombre:"); const cat = prompt("Categoría:");
+    if (name) { state.suppliers.push({ name, cat, lastUser: state.currentUser }); saveState(); renderSuppliers(); }
+}
+
+function renderWarehouse() {
+    const list = document.getElementById('warehouseList'); if (!list) return;
+    list.innerHTML = state.warehouse3d.map(p => `<div class="card"><h4>${p.name}</h4><p>${p.desc}</p><a href="${p.link}" target="_blank">Link</a></div>`).join('');
+}
+function showWarehouseForm() {
+    const name = prompt("Nombre:"); const desc = prompt("Descripción:"); const link = prompt("Link:");
+    if (name) { state.warehouse3d.push({ name, desc, link }); saveState(); renderWarehouse(); }
+}
+
+function exportToExcel() {
+    const start = document.getElementById('export-start').value;
+    const end = document.getElementById('export-end').value;
+    const wb = XLSX.utils.book_new();
+    const filterByDate = (arr) => arr.filter(i => { if (!start || !end) return true; return i.date >= start && i.date <= end; });
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.inventory), "Inventario");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterByDate(state.purchases)), "Compras");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterByDate(state.expenses)), "Gastos");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterByDate(state.invoices)), "Facturas");
+    XLSX.writeFile(wb, `Reporte_Pacioli.xlsx`);
+}
+
+function filterTable(tableId, val) {
+    document.querySelectorAll(`#${tableId} tbody tr`).forEach(r => {
+        let match = false; Array.from(r.cells).forEach(c => { if(c.innerText.toLowerCase().includes(val.toLowerCase())) match = true; });
+        r.style.display = match ? '' : 'none';
+    });
 }
