@@ -1,356 +1,405 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KAIA ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/yeti/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
-<body data-smart-converter-loaded="true">
-   <!-- Navigation -->
-   <nav id="pacioli-nav" class="navbar navbar-default navbar-fixed-top hidden" role="navigation">
-      <div class="container-fluid">
-         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#fs-navbar-collapse-1">
-               <span class="sr-only">Menú</span>
-               <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#" onclick="showPage('winInvoices')">
-               <i class="fa fa-home" aria-hidden="true"></i>&nbsp;
-               <span class="hidden-sm">KAIA</span>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div id="login-card" class="card">
+            <div class="card-header text-center">
+                <h3 class="page-title">Acceso a KAIA</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Usuario</label>
+                    <input type="text" id="username" class="form-control" placeholder="Nombre de usuario">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••">
+                </div>
+                <button id="btnLogin" class="btn btn-primary btn-block">Ingresar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <nav id="sidebar" class="hidden">
+        <div class="brand">KAIA ERP</div>
+        <div class="nav-links">
+            <a href="#" class="nav-item" onclick="showPage('winInvoices')">
+                <i class="fas fa-file-invoice"></i> Ventas
             </a>
-         </div>
-
-         <div class="collapse navbar-collapse" id="fs-navbar-collapse-1">
-            <ul class="nav navbar-nav">
-               <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                     <i class="fa fa-wrench hidden-xs" aria-hidden="true"></i>
-                     <span class="text-capitalize">admin</span>
-                  </a>
-                  <ul class="dropdown-menu">
-                     <li><a href="#" onclick="showPage('winInventory')">Inventario</a></li>
-                     <li><a href="#" onclick="showPage('winCustomers')">Clientes</a></li>
-                     <li><a href="#" onclick="exportToExcel()">Exportar Excel</a></li>
-                  </ul>
-               </li>
-               <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                     <span class="text-capitalize">compras</span>
-                  </a>
-                  <ul class="dropdown-menu">
-                     <li><a href="#" onclick="showPage('winPurchases')">Facturas</a></li>
-                     <li><a href="#" onclick="showPage('winExpenses')">Gastos</a></li>
-                  </ul>
-               </li>
-               <li class="dropdown active">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                     <span class="text-capitalize">ventas</span>
-                  </a>
-                  <ul class="dropdown-menu">
-                     <li class="active"><a href="#" onclick="showPage('winInvoices')">Facturas</a></li>
-                     <li class="divider"></li>
-                     <li><a href="#" onclick="showPage('win3D')">Calculadora 3D</a></li>
-                     <li><a href="#" onclick="showPage('winDTF')">Calculadora DTF</a></li>
-                  </ul>
-               </li>
-               <li><a href="#" onclick="showPage('winTech')">Área Técnica</a></li>
-            </ul>
-
-            <ul class="nav navbar-nav navbar-right">
-               <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                     <span class="hidden-xs">
-                        <i class="fa fa-question-circle" aria-hidden="true"></i>
-                        <span class="hidden-sm">&nbsp;Ayuda</span>
-                     </span>
-                  </a>
-                  <ul class="dropdown-menu">
-                     <li><a href="#" onclick="showPage('winManual')">Documentación</a></li>
-                  </ul>
-               </li>
-               <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                     <i class="fa fa-user-circle hidden-xs" aria-hidden="true"></i>
-                     <span id="currentUserNav"></span>
-                  </a>
-                  <ul class="dropdown-menu">
-                     <li><a href="#" id="btnLogoutSidebar"><i class="fa fa-sign-out"></i> Cerrar sesión</a></li>
-                  </ul>
-               </li>
-            </ul>
-         </div>
-      </div>
-   </nav>
-
-   <div style="margin-bottom: 55px"></div>
-
-   <!-- Login -->
-   <div id="loginScreen" class="container" style="margin-top: 100px;">
-       <div class="row">
-           <div class="col-md-4 col-md-offset-4">
-               <div class="panel panel-default">
-                   <div class="panel-heading text-center"><h3 class="panel-title">Acceso a KAIA</h3></div>
-                   <div class="panel-body">
-                       <input type="text" id="username" class="form-control" placeholder="Usuario" style="margin-bottom:10px">
-                       <input type="password" id="password" class="form-control" placeholder="Contraseña" style="margin-bottom:10px">
-                       <button id="btnLogin" class="btn btn-primary btn-block">Ingresar</button>
-                   </div>
-               </div>
-           </div>
-       </div>
-   </div>
-
-   <!-- Content -->
-   <div id="desktop" class="hidden">
-      <div id="main-content"></div>
-   </div>
-
-   <!-- Templates -->
-   <div id="templates" style="display:none">
-
-      <div id="tpl-winInvoices">
-         <div class="container-fluid" style="margin-top: 10px; margin-bottom: 10px;">
-            <div class="row">
-               <div class="col-sm-8 col-xs-6">
-                  <div class="btn-group">
-                     <a class="btn btn-sm btn-success" href="#" onclick="toggleNewInvoice()">
-                        <span class="glyphicon glyphicon-plus"></span>
-                        <span class="hidden-xs">&nbsp;Nueva</span>
-                     </a>
-                     <button class="btn btn-sm btn-default" onclick="checkInvoiceGaps()">
-                        <span class="glyphicon glyphicon-exclamation-sign"></span>&nbsp; Huecos
-                     </button>
-                  </div>
-               </div>
+            <a href="#" class="nav-item" onclick="showPage('win3D')">
+                <i class="fas fa-cube"></i> Calculadora 3D
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('winDTF')">
+                <i class="fas fa-print"></i> Calculadora DTF
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('winInventory')">
+                <i class="fas fa-boxes"></i> Inventario
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('winPurchases')">
+                <i class="fas fa-shopping-cart"></i> Compras
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('winExpenses')">
+                <i class="fas fa-wallet"></i> Gastos
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('winCustomers')">
+                <i class="fas fa-users"></i> Clientes
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('winTech')">
+                <i class="fas fa-tools"></i> Área Técnica
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('winManual')">
+                <i class="fas fa-book"></i> Manual
+            </a>
+            <a href="#" class="nav-item" onclick="exportToExcel()">
+                <i class="fas fa-file-excel"></i> Exportar
+            </a>
+        </div>
+        <div class="user-info">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fas fa-user-circle"></i> <span id="currentUserNav"></span></span>
+                <a href="#" id="btnLogoutSidebar" style="color: var(--sidebar-text)"><i class="fas fa-sign-out-alt"></i></a>
             </div>
-         </div>
+        </div>
+    </nav>
 
-         <div id="new-invoice-pane" class="container-fluid hidden">
-             <div class="panel panel-info">
-                 <div class="panel-heading">Nueva Factura</div>
-                 <div class="panel-body">
-                     <div class="row">
-                         <div class="col-md-6"><div class="form-group"><label>Cliente</label><select id="inv-cust-select" class="form-control"></select></div></div>
-                         <div class="col-md-6"><div class="form-group"><label>Vencimiento</label><input type="date" id="inv-due-date" class="form-control"></div></div>
-                     </div>
-                     <div class="well well-sm">
-                         <ul id="currentOrderItems" class="list-unstyled"></ul>
-                         <p class="text-right"><strong>Total: $<span id="currentOrderTotal">0.00</span></strong></p>
-                     </div>
-                     <textarea id="inv-obs" class="form-control" placeholder="Observaciones..."></textarea>
-                     <button class="btn btn-primary" style="margin-top:10px" onclick="finalizeInvoice()">Emitir Factura</button>
-                 </div>
+    <!-- Main Wrapper -->
+    <div id="desktop" class="hidden">
+        <main id="main-wrapper">
+            <div id="main-content"></div>
+        </main>
+    </div>
+
+    <!-- Floating Menu -->
+    <div id="floating-saved" class="hidden">
+        <div class="saved-panel" id="savedPanel">
+            <div class="card-header">
+                Calculos Guardados
+                <button class="btn btn-link" onclick="toggleSavedPanel()" style="padding:0"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="card-body" id="savedList" style="padding: 12px">
+                <p class="text-muted" style="font-size: 12px">No hay cálculos guardados.</p>
+            </div>
+        </div>
+        <div class="floating-btn" onclick="toggleSavedPanel()">
+            <i class="fas fa-history"></i>
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <div id="templates" style="display:none">
+        <!-- Invoices Template -->
+        <div id="tpl-winInvoices">
+            <div class="page-header">
+                <h1 class="page-title">Facturación</h1>
+                <p class="page-subtitle">Gestión de comprobantes y ventas</p>
+            </div>
+
+            <div style="margin-bottom: 24px">
+                <button class="btn btn-primary" onclick="toggleNewInvoice()">
+                    <i class="fas fa-plus"></i>&nbsp; Nueva Factura
+                </button>
+                <button class="btn btn-default" onclick="checkInvoiceGaps()" style="background: white; border: 1px solid var(--border)">
+                    <i class="fas fa-search"></i>&nbsp; Buscar Huecos
+                </button>
+            </div>
+
+            <div id="new-invoice-pane" class="card hidden">
+                <div class="card-header">Emisión de Factura</div>
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label>Cliente</label>
+                            <select id="inv-cust-select" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Vencimiento</label>
+                            <input type="date" id="inv-due-date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="card" style="background: var(--bg-main); border-style: dashed;">
+                        <div class="card-body" style="padding: 12px">
+                            <ul id="currentOrderItems" style="list-style: none; padding: 0; margin: 0"></ul>
+                            <div class="text-right" style="margin-top: 12px; font-size: 18px">
+                                <strong>Total: $<span id="currentOrderTotal">0.00</span></strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones</label>
+                        <textarea id="inv-obs" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="finalizeInvoice()">Emitir Factura</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body" style="padding: 0">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th class="text-right">Total</th>
+                                <th class="text-right">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoicesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Calculator Template -->
+        <div id="tpl-win3D">
+            <div class="page-header">
+                <h1 class="page-title">Calculadora 3D</h1>
+                <p class="page-subtitle">Costos reales y fijación de precios</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
+                <div class="card">
+                    <div class="card-header">Perfil Impresora</div>
+                    <div class="card-body">
+                        <div class="form-group"><label>Filamento ($/kg)</label><input type="number" id="c3d-filamentPrice" value="25000" class="form-control"></div>
+                        <div class="form-group"><label>Consumo (W)</label><input type="number" id="c3d-consumption" value="120" class="form-control"></div>
+                        <div class="form-group"><label>Luz ($/kWh)</label><input type="number" id="c3d-kwhPrice" value="150" class="form-control"></div>
+                        <div class="form-group"><label>Vida Útil (h)</label><input type="number" id="c3d-lifespan" value="10000" class="form-control"></div>
+                        <div class="form-group"><label>Precio Máquina</label><input type="number" id="c3d-machinePrice" value="450000" class="form-control"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Datos de la Pieza</div>
+                    <div class="card-body">
+                        <div class="form-group"><label>Gramos</label><input type="number" id="c3d-grams" value="150" class="form-control"></div>
+                        <div class="form-group"><label>Horas de Impresión</label><input type="number" id="c3d-hours" value="12" class="form-control"></div>
+                        <div class="form-group"><label>Insumos Extra ($)</label><input type="number" id="c3d-extra" value="0" class="form-control"></div>
+                        <div class="form-group"><label>Merma / Tasa Fallo (%)</label><input type="number" id="c3d-fail" value="10" class="form-control"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Rentabilidad</div>
+                    <div class="card-body">
+                        <div class="form-group"><label>Multiplicador de Ganancia</label><input type="number" id="c3d-mult" value="2.5" step="0.1" class="form-control"></div>
+                        <div class="alert alert-info" style="margin-top: 24px">
+                            <div style="font-size: 12px; text-transform: uppercase; margin-bottom: 4px">Costo de Producción</div>
+                            <div style="font-size: 20px; font-weight: 700">$<span id="c3d-res-cost">0</span></div>
+                            <hr style="margin: 12px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1)">
+                            <div style="font-size: 12px; text-transform: uppercase; margin-bottom: 4px">Precio Sugerido</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--primary)">$<span id="c3d-res-price">0</span></div>
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="addToInvoice('3D')">Añadir a Factura</button>
+                        <button class="btn btn-block" onclick="saveCalculation('3D')" style="margin-top: 8px; background: white; border: 1px solid var(--border)">Guardar para luego</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Análisis de Sensibilidad</div>
+                <div class="card-body">
+                    <canvas id="c3d-chart" style="max-height: 300px; width: 100%"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Template -->
+        <div id="tpl-winManual">
+            <div class="page-header">
+                <h1 class="page-title">Manual de Usuario</h1>
+                <p class="page-subtitle">Guía financiera y operativa de KAIA</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">1. Calculadora de Costos 3D (Ender 3 V2)</div>
+                <div class="card-body">
+                    <p>Esta herramienta permite determinar el costo real de una pieza considerando el desgaste oculto y los fallos operativos.</p>
+
+                    <h4 style="margin-top: 20px">Variables del Perfil</h4>
+                    <ul>
+                        <li><strong>Filamento:</strong> Precio pagado por el rollo de 1kg. Influye directamente en el costo de material.</li>
+                        <li><strong>Consumo (W):</strong> Potencia nominal de la impresora (Ender 3 aprox 120W). Determina el gasto eléctrico.</li>
+                        <li><strong>Luz ($/kWh):</strong> Tarifa local de energía eléctrica.</li>
+                        <li><strong>Vida Útil (h):</strong> Horas estimadas antes de un mantenimiento mayor o reemplazo total (estándar 10.000h).</li>
+                        <li><strong>Precio Máquina:</strong> Valor de reposición de la impresora. Clave para calcular la amortización.</li>
+                    </ul>
+
+                    <h4 style="margin-top: 20px">Fórmulas de Cálculo</h4>
+                    <div style="background: var(--bg-main); padding: 16px; border-radius: 8px; margin-bottom: 16px">
+                        <p><strong>1. Material:</strong> (Gramos / 1000) * Precio Filamento</p>
+                        <p><strong>2. Energía:</strong> (Watts / 1000) * Horas * Precio kWh</p>
+                        <p><strong>3. Amortización:</strong> (Precio Máquina / Vida Útil) * Horas</p>
+                        <p><strong>4. Costo Real:</strong> (Material + Energía + Amortización + Extras) * (1 + Merma/100)</p>
+                        <p><strong>5. Precio Venta:</strong> Costo Real * Multiplicador</p>
+                    </div>
+
+                    <h4>Ejemplo con Merma</h4>
+                    <p>Si una pieza cuesta $1000 en insumos y tenemos una merma del 10% (0.10), el costo real es $1100. Esto asegura que el 10% de piezas fallidas sean pagadas por las piezas exitosas.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">2. Calculadora DTF y Optimización</div>
+                <div class="card-body">
+                    <p>Optimiza la compra de remeras comparando la conveniencia de comprar "packs" de 5 unidades versus unidades sueltas.</p>
+                    <p><strong>Lógica:</strong> El sistema evalúa si al cliente le conviene comprar el siguiente pack de 5 (aunque le sobren remeras) si el costo total es menor que comprar las faltantes por unidad.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">3. Gestión de Inventario (WAC)</div>
+                <div class="card-body">
+                    <p>El sistema utiliza el método de <strong>Costo Promedio Ponderado</strong>. Cuando registras una compra, el costo del stock se recalcula:</p>
+                    <div style="background: var(--bg-main); padding: 16px; border-radius: 8px; font-family: monospace">
+                        Nuevo Costo = (Valor Stock Actual + Valor Compra Nueva) / (Cantidad Stock Actual + Cantidad Nueva)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Template -->
+        <div id="tpl-winInventory">
+            <div class="page-header">
+                <h1 class="page-title">Control de Inventario</h1>
+                <p class="page-subtitle">Valuación por Costo Promedio Ponderado (WAC)</p>
+            </div>
+            <div class="card">
+                <div class="card-body" style="padding: 0">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock</th>
+                                <th>Costo Promedio</th>
+                                <th>Valor Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other templates remain conceptually same but styled -->
+        <div id="tpl-winDTF">
+             <div class="page-header">
+                <h1 class="page-title">Calculadora DTF</h1>
+                <p class="page-subtitle">Optimización de insumos y packs</p>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px">
+                <div class="card">
+                    <div class="card-header">Costos de Insumos</div>
+                    <div class="card-body">
+                         <div class="form-group"><label>Pack 5 Remeras</label><input type="number" id="cdtf-pack5" value="18000" class="form-control"></div>
+                         <div class="form-group"><label>Remera Suelta</label><input type="number" id="cdtf-single" value="4500" class="form-control"></div>
+                         <div class="form-group"><label>Costo DTF (metro/hoja)</label><input type="number" id="cdtf-dtfPrice" value="3500" class="form-control"></div>
+                         <div class="form-group"><label>Diseños por metro</label><input type="number" id="cdtf-drawPerDtf" value="4" class="form-control"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Datos del Pedido</div>
+                    <div class="card-body">
+                         <div class="form-group"><label>Cantidad Pedida</label><input type="number" id="cdtf-order" value="10" class="form-control"></div>
+                         <div class="form-group"><label>Stock Disponible</label><input type="number" id="cdtf-stock" value="2" class="form-control"></div>
+                         <div class="form-group"><label>Precio Venta Unidad</label><input type="number" id="cdtf-sellPrice" value="9500" class="form-control"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div id="cdtf-results" class="alert alert-info">Resultados del cálculo...</div>
+                    <button class="btn btn-primary btn-block" onclick="addToInvoice('DTF')">Añadir a Factura</button>
+                    <button class="btn btn-block" onclick="saveCalculation('DTF')" style="margin-top: 8px; background: white; border: 1px solid var(--border)">Guardar para luego</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Minimal placeholders for other modules to keep script happy -->
+        <div id="tpl-winCustomers">
+            <div class="page-header"><h1 class="page-title">Clientes</h1></div>
+            <div class="card"><div class="card-body">
+                <div style="display: flex; gap: 12px; margin-bottom: 24px">
+                    <input type="text" id="cust-name" class="form-control" placeholder="Nombre">
+                    <input type="text" id="cust-id" class="form-control" placeholder="DNI/CUIT">
+                    <button class="btn btn-primary" onclick="addCustomer()">Registrar</button>
+                </div>
+                <table class="table"><tbody id="customersBody"></tbody></table>
+            </div></div>
+        </div>
+
+        <div id="tpl-winPurchases">
+             <div class="page-header"><h1 class="page-title">Compras</h1></div>
+             <button class="btn btn-primary" onclick="toggleNewPurchase()" style="margin-bottom: 20px">Nueva Compra</button>
+             <div id="new-purchase-pane" class="card hidden">
+                <div class="card-body">
+                    <div class="form-group"><label>Proveedor</label><input type="text" id="p-supplier" class="form-control"></div>
+                    <div class="form-group"><label>Producto</label><select id="p-link-inventory" class="form-control"></select></div>
+                    <div style="display:flex; gap:16px">
+                        <div class="form-group" style="flex:1"><label>Cant.</label><input type="number" id="p-qty" class="form-control"></div>
+                        <div class="form-group" style="flex:1"><label>Costo U.</label><input type="number" id="p-unit" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="registerPurchase()">Guardar</button>
+                </div>
              </div>
-         </div>
+             <table class="table"><tbody id="purchasesBody"></tbody></table>
+        </div>
 
-         <ul class="nav nav-tabs" role="tablist">
-            <li class="active"><a href="#" onclick="renderInvoices('all')">Todas</a></li>
-            <li><a href="#" onclick="renderInvoices('pending')">Sin pagar <span class="badge" id="badge-pending">0</span></a></li>
-         </ul>
+        <div id="tpl-winExpenses">
+            <div class="page-header"><h1 class="page-title">Gastos</h1></div>
+            <div class="card"><div class="card-body">
+                <div style="display: flex; gap: 12px; margin-bottom: 24px">
+                    <input type="text" id="exp-desc" class="form-control" placeholder="Concepto">
+                    <input type="number" id="exp-amount" class="form-control" placeholder="Monto">
+                    <button class="btn btn-primary" onclick="addExpense()">Registrar</button>
+                </div>
+                <table class="table"><tbody id="expensesBody"></tbody></table>
+            </div></div>
+        </div>
 
-         <div class="table-responsive">
-            <table class="table table-hover">
-               <thead>
-                  <tr>
-                     <th></th><th>ID</th><th>Cliente</th><th>Observaciones</th><th class="text-right">Total</th><th class="text-right">Fecha</th><th class="text-right">Vencimiento</th>
-                  </tr>
-               </thead>
-               <tbody id="invoicesBody"></tbody>
-            </table>
-         </div>
-      </div>
+        <div id="tpl-winTech">
+             <div class="page-header"><h1 class="page-title">Área Técnica</h1></div>
+             <div class="card"><div class="card-body">
+                 <div class="form-group"><label>Máquina</label><input type="text" id="tech-machine" class="form-control"></div>
+                 <div class="form-group"><label>Acción</label><input type="text" id="tech-action" class="form-control"></div>
+                 <button class="btn btn-primary" onclick="addTechLog()">Guardar Log</button>
+             </div></div>
+             <table class="table"><tbody id="techBody"></tbody></table>
+        </div>
 
-      <div id="tpl-win3D">
-         <div class="container-fluid">
-            <h1 class="page-header">Calculadora 3D <small>Costo y Rentabilidad</small></h1>
-            <div class="row">
-               <div class="col-md-4">
-                  <div class="panel panel-default"><div class="panel-heading">Costos Fijos</div><div class="panel-body">
-                     <div class="form-group"><label>Filamento ($/kg)</label><input type="number" id="c3d-filamentPrice" value="25000" class="form-control"></div>
-                     <div class="form-group"><label>Consumo (W)</label><input type="number" id="c3d-consumption" value="120" class="form-control"></div>
-                     <div class="form-group"><label>Luz ($/kWh)</label><input type="number" id="c3d-kwhPrice" value="150" class="form-control"></div>
-                     <div class="form-group"><label>Vida Útil (h)</label><input type="number" id="c3d-lifespan" value="10000" class="form-control"></div>
-                     <div class="form-group"><label>Precio Máquina</label><input type="number" id="c3d-machinePrice" value="450000" class="form-control"></div>
-                  </div></div>
-               </div>
-               <div class="col-md-4">
-                  <div class="panel panel-default"><div class="panel-heading">Datos de la Pieza</div><div class="panel-body">
-                     <div class="form-group"><label>Gramos</label><input type="number" id="c3d-grams" value="150" class="form-control"></div>
-                     <div class="form-group"><label>Horas</label><input type="number" id="c3d-hours" value="12" class="form-control"></div>
-                     <div class="form-group"><label>Insumos Extra</label><input type="number" id="c3d-extra" value="0" class="form-control"></div>
-                     <div class="form-group"><label>Merma/Fallo %</label><input type="number" id="c3d-fail" value="10" class="form-control"></div>
-                  </div></div>
-               </div>
-               <div class="col-md-4">
-                  <div class="panel panel-default"><div class="panel-heading">Ganancia</div><div class="panel-body">
-                     <div class="form-group"><label>Multiplicador</label><input type="number" id="c3d-mult" value="2.5" step="0.1" class="form-control"></div>
-                  </div></div>
-               </div>
+    </div>
+
+    <!-- Invoice Detail Modal (Styled) -->
+    <div id="modal_invoice_details" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;">
+        <div class="card" style="width: 500px; margin: 0">
+            <div class="card-header">
+                <span id="m-inv-title">Factura</span>
+                <button class="btn btn-link" onclick="$('#modal_invoice_details').addClass('hidden')" style="padding:0; color:var(--text-main)"><i class="fas fa-times"></i></button>
             </div>
-            <div class="well text-center" style="background:#008cba; color:white">
-               <h3>COSTO REAL: $<span id="c3d-res-cost">0</span> | PRECIO VENTA: $<span id="c3d-res-price">0</span></h3>
-               <button class="btn btn-default" onclick="addToInvoice('3D')">AGREGAR A FACTURA</button>
+            <div class="card-body">
+                 <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
+                     <div><strong>Fecha:</strong> <div id="m-inv-date"></div></div>
+                     <div class="text-right"><strong>Cliente:</strong> <div id="m-inv-cust"></div></div>
+                 </div>
+                 <table class="table" style="margin-bottom: 24px">
+                     <tbody id="m-inv-items"></tbody>
+                 </table>
+                 <div class="text-right" style="font-size: 24px; font-weight: 700">TOTAL: $<span id="m-inv-total"></span></div>
             </div>
-            <canvas id="c3d-chart" style="max-height:250px"></canvas>
-         </div>
-      </div>
+        </div>
+    </div>
 
-      <div id="tpl-winDTF">
-         <div class="container-fluid">
-            <h1 class="page-header">Calculadora DTF <small>Optimización</small></h1>
-            <div class="row">
-               <div class="col-md-6">
-                  <div class="panel panel-default"><div class="panel-heading">Precios</div><div class="panel-body">
-                     <div class="form-group"><label>Pack 5 Remeras</label><input type="number" id="cdtf-pack5" value="18000" class="form-control"></div>
-                     <div class="form-group"><label>Remera Suelta</label><input type="number" id="cdtf-single" value="4500" class="form-control"></div>
-                     <div class="form-group"><label>Costo DTF (metro/hoja)</label><input type="number" id="cdtf-dtfPrice" value="3500" class="form-control"></div>
-                     <div class="form-group"><label>Diseños por metro</label><input type="number" id="cdtf-drawPerDtf" value="4" class="form-control"></div>
-                  </div></div>
-               </div>
-               <div class="col-md-6">
-                  <div class="panel panel-default"><div class="panel-heading">Pedido</div><div class="panel-body">
-                     <div class="form-group"><label>Cantidad Pedida</label><input type="number" id="cdtf-order" value="10" class="form-control"></div>
-                     <div class="form-group"><label>Stock Disponible</label><input type="number" id="cdtf-stock" value="2" class="form-control"></div>
-                     <div class="form-group"><label>Precio Venta Unidad</label><input type="number" id="cdtf-sellPrice" value="9500" class="form-control"></div>
-                  </div></div>
-               </div>
-            </div>
-            <div id="cdtf-results" class="alert alert-info"></div>
-            <button class="btn btn-primary btn-block" onclick="addToInvoice('DTF')">AGREGAR A FACTURA</button>
-         </div>
-      </div>
-
-      <div id="tpl-winInventory">
-         <div class="container-fluid">
-            <h1 class="page-header">Inventario (WAC)</h1>
-            <table class="table table-striped table-bordered">
-               <thead><tr><th>Producto</th><th>Stock</th><th>Costo Promedio</th><th>Valor Total</th><th></th></tr></thead>
-               <tbody id="inventoryBody"></tbody>
-            </table>
-         </div>
-      </div>
-
-      <div id="tpl-winCustomers">
-         <div class="container-fluid">
-            <h1 class="page-header">Clientes</h1>
-            <div class="row" style="margin-bottom:15px">
-               <div class="col-md-5"><input type="text" id="cust-name" class="form-control" placeholder="Nombre"></div>
-               <div class="col-md-4"><input type="text" id="cust-id" class="form-control" placeholder="DNI/CUIT"></div>
-               <div class="col-md-3"><button class="btn btn-success btn-block" onclick="addCustomer()">Registrar</button></div>
-            </div>
-            <table class="table table-hover"><thead><tr><th>Nombre</th><th>ID</th><th></th></tr></thead><tbody id="customersBody"></tbody></table>
-         </div>
-      </div>
-
-      <div id="tpl-winPurchases">
-         <div class="container-fluid">
-            <h1 class="page-header">Facturas de Compra</h1>
-            <div class="btn-group" style="margin-bottom:15px">
-               <button class="btn btn-sm btn-success" onclick="toggleNewPurchase()">
-                  <span class="glyphicon glyphicon-plus"></span> Nueva Compra
-               </button>
-            </div>
-
-            <div id="new-purchase-pane" class="panel panel-info hidden">
-               <div class="panel-heading">Registrar Compra</div>
-               <div class="panel-body">
-                  <div class="row">
-                     <div class="col-md-3"><div class="form-group"><label>Proveedor</label><input type="text" id="p-supplier" class="form-control"></div></div>
-                     <div class="col-md-3"><div class="form-group"><label>Vincular Producto</label><select id="p-link-inventory" class="form-control"></select></div></div>
-                     <div class="col-md-2"><div class="form-group"><label>Cantidad</label><input type="number" id="p-qty" class="form-control"></div></div>
-                     <div class="col-md-2"><div class="form-group"><label>Costo Unit.</label><input type="number" id="p-unit" class="form-control"></div></div>
-                     <div class="col-md-2"><div class="form-group"><label>Fecha</label><input type="date" id="p-date" class="form-control"></div></div>
-                  </div>
-                  <input type="text" id="p-desc" class="form-control" placeholder="Descripción/Observaciones">
-                  <button class="btn btn-primary" style="margin-top:10px" onclick="registerPurchase()">Guardar Compra</button>
-               </div>
-            </div>
-
-            <table class="table table-hover">
-               <thead><tr><th></th><th>Proveedor</th><th>Descripción</th><th class="text-right">Total</th><th class="text-right">Fecha</th></tr></thead>
-               <tbody id="purchasesBody"></tbody>
-            </table>
-         </div>
-      </div>
-
-      <div id="tpl-winExpenses">
-         <div class="container-fluid">
-            <h1 class="page-header">Gastos Operativos</h1>
-            <div class="row" style="margin-bottom:15px">
-               <div class="col-md-4"><input type="text" id="exp-desc" class="form-control" placeholder="Concepto"></div>
-               <div class="col-md-3"><input type="number" id="exp-amount" class="form-control" placeholder="Monto"></div>
-               <div class="col-md-3"><input type="date" id="exp-date" class="form-control"></div>
-               <div class="col-md-2"><button class="btn btn-danger btn-block" onclick="addExpense()">Registrar</button></div>
-            </div>
-            <table class="table table-hover"><thead><tr><th>Concepto</th><th class="text-right">Monto</th><th>Fecha</th></tr></thead><tbody id="expensesBody"></tbody></table>
-         </div>
-      </div>
-
-      <div id="tpl-winTech">
-         <div class="container-fluid">
-            <h1 class="page-header">Área Técnica <small>Logs de mantenimiento</small></h1>
-            <div class="panel panel-default">
-               <div class="panel-heading">Registrar Intervención</div>
-               <div class="panel-body">
-                  <div class="row">
-                     <div class="col-md-4"><div class="form-group"><label>Equipo</label><input type="text" id="tech-machine" class="form-control" placeholder="Ender 3 v2"></div></div>
-                     <div class="col-md-8"><div class="form-group"><label>Acción</label><input type="text" id="tech-action" class="form-control" placeholder="Cambio de boquilla / Nivelación"></div></div>
-                  </div>
-                  <button class="btn btn-warning" onclick="addTechLog()">Guardar Log</button>
-               </div>
-            </div>
-            <table class="table table-striped"><thead><tr><th>Fecha</th><th>Equipo</th><th>Acción</th><th>Técnico</th></tr></thead><tbody id="techBody"></tbody></table>
-         </div>
-      </div>
-
-      <div id="tpl-winManual">
-         <div class="container-fluid">
-            <h1 class="page-header">Manual KAIA <small>Uso y Fórmulas</small></h1>
-            <div class="panel panel-default">
-               <div class="panel-heading">1. Calculadora de Costos 3D</div>
-               <div class="panel-body">
-                  <p>Esta herramienta desglosa el costo de producción en 4 variables críticas:</p>
-                  <ul>
-                     <li><strong>Costo de Material:</strong> (Gramos de la pieza / 1000) * Precio del Filamento por kg.</li>
-                     <li><strong>Costo de Energía:</strong> (Consumo Watts / 1000) * Horas de Impresión * Precio del kWh.</li>
-                     <li><strong>Amortización (Desgaste):</strong> (Precio de Máquina / Vida útil en horas) * Horas de uso.</li>
-                     <li><strong>Tasa de Fallo (Merma):</strong> Se aplica un porcentaje extra al costo total para cubrir fallos comunes.</li>
-                  </ul>
-               </div>
-            </div>
-         </div>
-      </div>
-   </div>
-
-   <!-- Details Modal -->
-   <div id="modal_invoice_details" class="modal fade" tabindex="-1">
-       <div class="modal-dialog">
-           <div class="modal-content">
-               <div class="modal-header">
-                   <button type="button" class="close" data-dismiss="modal">×</button>
-                   <h4 class="modal-title" id="m-inv-title">Factura</h4>
-               </div>
-               <div class="modal-body">
-                   <div class="row">
-                       <div class="col-xs-6"><p><strong>Fecha:</strong> <br><span id="m-inv-date"></span></p></div>
-                       <div class="col-xs-6 text-right"><p><strong>Cliente:</strong> <br><span id="m-inv-cust"></span></p></div>
-                   </div>
-                   <hr>
-                   <table class="table table-striped"><thead><tr><th>Descripción</th><th class="text-right">Monto</th></tr></thead><tbody id="m-inv-items"></tbody></table>
-                   <div class="well text-right"><h2>TOTAL: $<span id="m-inv-total"></span></h2></div>
-               </div>
-               <div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">CERRAR</button></div>
-           </div>
-       </div>
-   </div>
-
-   <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
