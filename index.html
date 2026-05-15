@@ -25,10 +25,12 @@
         <div class="sidebar-logo">✳</div>
         <div class="sidebar-item" title="Dashboard" onclick="location.reload()">⊞</div>
         <div class="sidebar-item" title="Inventario" onclick="openWindow('winInventory')">📦</div>
+        <div class="sidebar-item" title="Clientes" onclick="openWindow('winCustomers')">👥</div>
         <div class="sidebar-item" title="Facturas" onclick="openWindow('winInvoices')">📄</div>
         <div class="sidebar-item" title="Gastos" onclick="openWindow('winExpenses')">💸</div>
         <div class="sidebar-item" title="Técnico" onclick="openWindow('winTech')">🛠</div>
         <div class="sidebar-item" title="Manual" onclick="openWindow('winManual')">📖</div>
+        <div class="sidebar-item" title="Formas de Pago" onclick="openWindow('winPayments')">💳</div>
         <div style="flex-grow: 1;"></div>
         <div class="sidebar-item" title="Cerrar Sesión" id="btnLogoutSidebar">⏻</div>
     </div>
@@ -237,6 +239,16 @@
             </div>
         </div>
 
+        <div id="tpl-winPayments" title="Formas de Pago">
+            <div class="payments-content">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input type="text" id="pay-name" placeholder="Nueva forma de pago (Ej: Transferencia)" style="flex-grow:1">
+                    <button class="btn-action" onclick="addPaymentMethod()">✚ Agregar</button>
+                </div>
+                <ul id="paymentMethodsList" style="list-style:none"></ul>
+            </div>
+        </div>
+
         <div id="tpl-winTech" title="Área Técnica">
             <div class="tech-content">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -264,18 +276,59 @@
             </div>
         </div>
 
-        <div id="tpl-winInvoices" title="Facturación">
-            <div class="invoices-content">
-                <div style="background: #fdf2f2; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                    <h4 style="font-size: 0.8rem; margin-bottom: 8px;">Orden Actual</h4>
-                    <ul id="currentOrderItems" style="font-size: 0.8rem; list-style: none;"></ul>
-                    <p style="font-weight: 600; margin-top: 8px;">Total: $<span id="currentOrderTotal">0</span></p>
-                    <button class="btn-action" onclick="finalizeInvoice()">Emitir Factura</button>
+        <div id="tpl-winCustomers" title="Clientes">
+            <div class="customers-content">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input type="text" id="cust-name" placeholder="Nombre / Razón Social" style="flex-grow:1">
+                    <input type="text" id="cust-id" placeholder="CUIT/DNI">
+                    <button class="btn-action" onclick="addCustomer()">✚ Nuevo</button>
                 </div>
-                <table id="invoicesTable">
-                    <thead><tr><th>ID</th><th>Usuario</th><th>Total</th><th>Acciones</th></tr></thead>
-                    <tbody id="invoicesBody"></tbody>
+                <table id="customersTable">
+                    <thead><tr><th>Nombre</th><th>Identificación</th><th>Acciones</th></tr></thead>
+                    <tbody id="customersBody"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <div id="tpl-winInvoices" title="Ventas - Facturas">
+            <div class="invoices-content">
+                <div style="background: #fdf2f2; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #fee2e2;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 10px; display:flex; align-items:center; gap:8px;">🛒 Nueva Factura <small style="font-weight: normal; color: #999;">(Agrega items desde calculadoras)</small></h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <select id="inv-cust-select" class="full-width"><option value="">-- Consumidor Final --</option></select>
+                        <select id="inv-pay-select" class="full-width"></select>
+                        <input type="date" id="inv-due-date" title="Fecha de Vencimiento">
+                    </div>
+                    <ul id="currentOrderItems" style="font-size: 0.8rem; list-style: none; margin-bottom:10px;"></ul>
+                    <textarea id="inv-obs" placeholder="Observaciones..." style="width:100%; height:40px; margin-bottom:10px; font-size:0.8rem; padding:5px;"></textarea>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <p style="font-size: 1.2rem; font-weight: 700; margin: 0;">Total: $<span id="currentOrderTotal">0</span></p>
+                        <button class="btn-action" onclick="finalizeInvoice()">✔ Emitir Factura</button>
+                    </div>
+                </div>
+
+                <div class="tabs" style="display:flex; gap:10px; margin-bottom:10px; border-bottom:1px solid #eee;">
+                    <button class="tab-btn active" onclick="renderInvoices('all')">Todas</button>
+                    <button class="tab-btn" onclick="renderInvoices('pending')">Sin Pagar</button>
+                    <button class="tab-btn" onclick="checkInvoiceGaps()">🔍 Huecos</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="invoicesTable">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th>Código</th>
+                                <th>Cliente</th>
+                                <th>Obs</th>
+                                <th class="text-right">Total</th>
+                                <th class="text-right">Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoicesBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

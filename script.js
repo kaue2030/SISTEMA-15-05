@@ -8,6 +8,9 @@ let state = {
     suppliers: [],
     warehouse3d: [],
     invoices: [],
+    invoiceCounter: 1,
+    customers: [],
+    paymentMethods: ['Efectivo', 'Transferencia', 'Mercado Pago', 'Tarjeta'],
     currentOrder: [],
     techLogs: [],
     techParams: [],
@@ -256,7 +259,9 @@ function renderModule(id) {
     if (id === 'winPurchases') { populatePurchaseProductSelector(); renderPurchases(); }
     if (id === 'winExpenses') { renderExpenses(); }
     if (id === 'winSuppliers') renderSuppliers();
-    if (id === 'winInvoices') renderInvoices();
+    if (id === 'winCustomers') renderCustomers();
+    if (id === 'winPayments') renderPaymentMethods();
+    if (id === 'winInvoices') { renderInvoices(); renderCurrentOrder(); }
     if (id === 'winWarehouse') renderWarehouse();
     if (id === 'winTech') renderTech();
 }
@@ -397,22 +402,113 @@ function addToInvoice(type) {
     state.currentOrder.push({ desc, price }); renderCurrentOrder();
 }
 function renderCurrentOrder() {
-    const list = document.getElementById('currentOrderItems') || document.querySelector('#currentOrderItems'); if (!list) return;
-    list.innerHTML = state.currentOrder.map((item, idx) => `<li>${item.desc} - $${item.price.toFixed(2)} <button onclick="removeFromOrder(${idx})">x</button></li>`).join('');
-    const totalEl = document.getElementById('currentOrderTotal') || document.querySelector('#currentOrderTotal');
+    const win = document.getElementById('winInvoices');
+    if (!win) return;
+    const list = win.querySelector('#currentOrderItems'); if (!list) return;
+    list.innerHTML = state.currentOrder.map((item, idx) => `<li style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #fecaca; padding:4px 0;"><span>${item.desc}</span> <span>$${item.price.toFixed(2)} <button onclick="removeFromOrder(${idx})">x</button></span></li>`).join('');
+    const totalEl = win.querySelector('#currentOrderTotal');
     if (totalEl) totalEl.innerText = state.currentOrder.reduce((sum, i) => sum + i.price, 0).toFixed(2);
 }
 function removeFromOrder(idx) { state.currentOrder.splice(idx, 1); renderCurrentOrder(); }
 function finalizeInvoice() {
+    const win = document.getElementById('winInvoices');
     if (state.currentOrder.length === 0) return;
-    state.invoices.push({ id: 'INV-' + Math.floor(Math.random()*10000), date: new Date().toISOString(), items: [...state.currentOrder], total: state.currentOrder.reduce((sum, i) => sum + i.price, 0), user: state.currentUser });
-    state.currentOrder = []; saveState(); renderInvoices(); renderCurrentOrder(); refreshDashboard();
+    const custId = win.querySelector('#inv-cust-select').value;
+    const payMethod = win.querySelector('#inv-pay-select').value;
+    const dueDate = win.querySelector('#inv-due-date').value;
+    const obs = win.querySelector('#inv-obs').value;
+    const total = state.currentOrder.reduce((sum, i) => sum + i.price, 0);
+
+    const year = new Date().getFullYear();
+    const code = `FAC-${year}-${String(state.invoiceCounter++).padStart(3, '0')}`;
+
+    state.invoices.push({
+        id: code,
+        num: state.invoiceCounter - 1,
+        date: new Date().toISOString(),
+        dueDate: dueDate || new Date().toISOString().slice(0, 10),
+        items: [...state.currentOrder],
+        total,
+        user: state.currentUser,
+        customerId: custId,
+        paymentMethod: payMethod,
+        obs,
+        status: 'Pending'
+    });
+    state.currentOrder = [];
+    saveState();
+    renderInvoices();
+    renderCurrentOrder();
+    refreshDashboard();
+
+    // Clear inputs
+    win.querySelector('#inv-obs').value = '';
 }
-function renderInvoices() {
+function renderInvoices(filter = 'all') {
     const win = document.getElementById('winInvoices');
     if (!win) return;
+    populateInvoiceCustomers();
     const body = win.querySelector('#invoicesBody'); if (!body) return;
-    body.innerHTML = state.invoices.map(inv => `<tr><td>${inv.id}</td><td>${inv.user || '---'}</td><td>$${inv.total.toFixed(2)}</td><td><button onclick="viewInvoice('${inv.id}')">Ver</button></td></tr>`).join('');
+
+    let list = state.invoices;
+    if (filter === 'pending') list = list.filter(i => i.status === 'Pending');
+
+    body.innerHTML = list.slice().reverse().map(inv => {
+        const cust = state.customers.find(c => c.cid === inv.customerId) || { name: 'Consumidor Final' };
+        const statusIcon = inv.status === 'Paid' ? '✅' : (inv.status === 'Canceled' ? '❌' : '⏳');
+        const statusClass = inv.status.toLowerCase();
+        return `<tr class="status-${statusClass}">
+            <td>${statusIcon}</td>
+            <td><strong>${inv.id}</strong></td>
+            <td>${cust.name}</td>
+            <td style="font-size:0.7rem; max-width:100px; overflow:hidden; text-overflow:ellipsis;">${inv.obs || '-'}</td>
+            <td class="text-right">$${inv.total.toFixed(2)}</td>
+            <td class="text-right">${new Date(inv.date).toLocaleDateString()}</td>
+            <td>
+                <button onclick="viewInvoice('${inv.id}')">👁</button>
+                ${inv.status === 'Pending' ? `<button onclick="updateInvoiceStatus('${inv.id}', 'Paid')">💵</button>` : ''}
+                ${inv.status !== 'Canceled' ? `<button onclick="updateInvoiceStatus('${inv.id}', 'Canceled')">🚫</button>` : ''}
+            </td>
+        </tr>`;
+    }).join('');
+}
+function updateInvoiceStatus(id, status) {
+    const inv = state.invoices.find(i => i.id === id);
+    if (inv) { inv.status = status; saveState(); renderInvoices(); refreshDashboard(); }
+}
+function populateInvoiceCustomers() {
+    const win = document.getElementById('winInvoices'); if (!win) return;
+    const sel = win.querySelector('#inv-cust-select'); if (!sel) return;
+    const selPay = win.querySelector('#inv-pay-select'); if (!selPay) return;
+
+    const currentCust = sel.value;
+    sel.innerHTML = '<option value="">-- Consumidor Final --</option>';
+    state.customers.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.cid;
+        opt.innerText = c.name;
+        sel.appendChild(opt);
+    });
+    sel.value = currentCust;
+
+    const currentPay = selPay.value;
+    selPay.innerHTML = '';
+    state.paymentMethods.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.innerText = m;
+        selPay.appendChild(opt);
+    });
+    selPay.value = currentPay;
+}
+function checkInvoiceGaps() {
+    const nums = state.invoices.map(i => i.num).sort((a,b) => a-b);
+    let gaps = [];
+    for(let i=1; i < state.invoiceCounter; i++) {
+        if(!nums.includes(i)) gaps.push(i);
+    }
+    if(gaps.length === 0) alert("No hay huecos en la numeración.");
+    else alert("Faltan los siguientes números de factura: " + gaps.join(", "));
 }
 function viewInvoice(id) {
     const inv = state.invoices.find(i => i.id === id);
@@ -421,6 +517,38 @@ function viewInvoice(id) {
 function searchInvoice(val) {
     document.querySelectorAll('#invoicesTable tbody tr').forEach(r => r.style.display = r.cells[0].innerText.includes(val) ? '' : 'none');
 }
+
+function addCustomer() {
+    const win = document.getElementById('winCustomers');
+    const name = win.querySelector('#cust-name').value;
+    const cid = win.querySelector('#cust-id').value;
+    if (!name) return;
+    state.customers.push({ name, cid });
+    saveState(); renderCustomers();
+    win.querySelector('#cust-name').value = '';
+    win.querySelector('#cust-id').value = '';
+}
+function renderCustomers() {
+    const win = document.getElementById('winCustomers'); if (!win) return;
+    const body = win.querySelector('#customersBody');
+    body.innerHTML = state.customers.map((c, idx) => `<tr><td>${c.name}</td><td>${c.cid}</td><td><button onclick="deleteCustomer(${idx})">x</button></td></tr>`).join('');
+}
+function deleteCustomer(idx) { state.customers.splice(idx, 1); saveState(); renderCustomers(); }
+
+function addPaymentMethod() {
+    const win = document.getElementById('winPayments');
+    const name = win.querySelector('#pay-name').value;
+    if (!name) return;
+    state.paymentMethods.push(name);
+    saveState(); renderPaymentMethods();
+    win.querySelector('#pay-name').value = '';
+}
+function renderPaymentMethods() {
+    const win = document.getElementById('winPayments'); if (!win) return;
+    const list = win.querySelector('#paymentMethodsList');
+    list.innerHTML = state.paymentMethods.map((m, idx) => `<li style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">${m} <button onclick="deletePaymentMethod(${idx})">x</button></li>`).join('');
+}
+function deletePaymentMethod(idx) { state.paymentMethods.splice(idx, 1); saveState(); renderPaymentMethods(); }
 
 function renderSuppliers() {
     const list = document.getElementById('supplierList') || document.querySelector('#supplierList'); if (!list) return;
